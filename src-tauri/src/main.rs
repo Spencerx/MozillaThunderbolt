@@ -7,7 +7,6 @@ mod imap_client;
 
 use anyhow::Result;
 use sea_orm::ActiveModelTrait;
-use sea_orm::ActiveValue::Set;
 
 use entity::*;
 
@@ -32,6 +31,9 @@ async fn main() -> Result<()> {
     // };
 
     let inserted_message: message::Model = message.insert(&db).await?;
+
+    let embedding = embedding::get_embedding("Hello, world!")?;
+    println!("{:?}", embedding);
 
     mozilla_assist_lib::run();
 

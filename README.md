@@ -67,8 +67,7 @@ sea-orm-cli generate entity -o entity/src
 rustup toolchain install nightly
 rustup override set nightly
 rustup target add aarch64-apple-ios-sim # Add your device architecture (replace "aarch64-apple-ios-sim" with the desired device architecture)
-bun run tauri ios dev --force-ip-prompt
-bun run tauri ios dev --force-ip-prompt --open --host
+bun run tauri ios dev --force-ip-prompt --host # Be sure to select the IP of your dev computer on the local network
 ```
 
 - https://tauri.app/develop/#developing-your-mobile-application
