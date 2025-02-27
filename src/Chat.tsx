@@ -3,8 +3,8 @@ import { Message, useChat } from '@ai-sdk/solid'
 import { invoke } from '@tauri-apps/api/core'
 import { fetch as rawTauriFetch } from '@tauri-apps/plugin-http'
 import { streamText, tool, ToolInvocation } from 'ai'
-import { For } from 'solid-js'
 import { z } from 'zod'
+import ChatUI from './ChatUI'
 
 export type ToolInvocationWithResult<T = object> = ToolInvocation & {
   result: T
@@ -156,7 +156,7 @@ const fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
 }
 
 export default function App() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const chatHelpers = useChat({
     fetch,
     maxSteps: 5,
     // streamProtocol: 'text',
@@ -164,34 +164,5 @@ export default function App() {
 
   // console.log('messages', messages())
 
-  return (
-    <div class="chat-container">
-      <div class="messages">
-        <For each={messages()}>
-          {(message, i) => (
-            <div class={`message ${message.role}`}>
-              <For each={message.parts.filter((part) => part.type === 'tool-invocation')}>
-                {(part) => {
-                  const { toolName, toolCallId, args } = part.toolInvocation
-                  console.log('toolName', part.toolInvocation)
-                  return (
-                    <div>
-                      {message.role}
-                      <div>{args.text}</div>
-                      {/* <div>{JSON.stringify(args)}</div> */}
-                    </div>
-                  )
-                }}
-              </For>
-            </div>
-          )}
-        </For>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <input value={input()} onInput={handleInputChange} placeholder="Say something..." />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  )
+  return <ChatUI chatHelpers={chatHelpers} />
 }

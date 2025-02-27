@@ -11,8 +11,9 @@ export default function App() {
     id: createUniqueId(),
     orientation: 'horizontal',
     defaultSize: [
-      { id: 'a', size: 30, minSize: 10, maxSize: 50 },
-      { id: 'b', size: 70, minSize: 50, maxSize: 90 },
+      { id: 'a', size: 20, minSize: 10, maxSize: 30 },
+      { id: 'b', size: 60, minSize: 40, maxSize: 80 },
+      { id: 'c', size: 20, minSize: 10, maxSize: 30 },
     ],
   })
 
@@ -47,8 +48,21 @@ export default function App() {
           <div class="w-0.5 h-8 bg-gray-400"></div>
         </div>
 
-        <div class="overflow-auto p-4 bg-white" {...api().getPanelProps({ id: 'b' })}>
+        <div class="overflow-auto bg-white" {...api().getPanelProps({ id: 'b' })}>
           <Chat />
+        </div>
+
+        <div class="w-1.5 bg-gray-200 hover:bg-indigo-400 transition-colors cursor-col-resize flex items-center justify-center" {...api().getResizeTriggerProps({ id: 'b:c' })}>
+          <div class="w-0.5 h-8 bg-gray-400"></div>
+        </div>
+
+        <div class="overflow-auto p-4 bg-white" {...api().getPanelProps({ id: 'c' })}>
+          <div class="h-full rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+            <div class="text-center">
+              <h2 class="text-xl font-semibold text-gray-700">Right Panel</h2>
+              <p class="text-gray-500 mt-2">Content for panel C goes here</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
