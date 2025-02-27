@@ -1,5 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { Message, useChat } from '@ai-sdk/react'
+import { invoke } from '@tauri-apps/api/core'
 import { fetch as rawTauriFetch } from '@tauri-apps/plugin-http'
 import { streamText, tool, ToolInvocation } from 'ai'
 import { z } from 'zod'
@@ -8,8 +9,52 @@ export type ToolInvocationWithResult<T = object> = ToolInvocation & {
   result: T
 }
 
+const user = {
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john.doe@example.com',
+}
+
 const p2 = `
-  You are a helpful executive assistant that assists users generating passwords. Create a password for the user and reply to them.
+  You are a helpful executive assistant that assists users with their email and calendar.
+  
+  The current date and time is ${new Date().toISOString()}.
+
+  The current user is ${user.first_name} ${user.last_name} (${user.email}).
+  
+  Call the "search" tool once to search the user's inbox and contacts for relevant information.
+  
+  Some of these documents may not be relevant to the user's question. It is your job to read through the content of the results to decide if they are relevant.
+  
+  If none of the search results are relevant, that's ok, but you don't need to search again.
+  
+  If you are unable to answer the user's question based on the search results, just say so. Do not make up an answer.
+  
+  Call the "answer" tool to provide your final response to the user. Example:
+  
+  {
+    "text": "I found several Postmark receipts in your inbox. Here are the details of the receipts:",
+    "results": [
+      {
+        "id": "gmail/1234567890",
+        "type": "message"
+      },
+      {
+        "id": "gmail/1234567891",
+        "type": "message"
+      },
+      {
+        "id": "gmail/1234567892",
+        "type": "thread"
+      },
+      {
+        "id": "2026780c-8af3-4d02-91dc-36a62a7413e2",
+        "type": "contact"
+      }
+    ]
+  }
+
+  Note: you need to include the "gmail/" prefix for message and thread ids.
   `
 
 const tauriFetch = async (url: RequestInfo | URL, options: RequestInit) => {
@@ -17,45 +62,45 @@ const tauriFetch = async (url: RequestInfo | URL, options: RequestInit) => {
   return rawTauriFetch(url, options)
 }
 
-const debugFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  console.log('fetch', input, init)
+// const debugFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+//   console.log('fetch', input, init)
 
-  const options = init as RequestInit & { body: string }
-  const body = JSON.parse(options.body)
+//   const options = init as RequestInit & { body: string }
+//   const body = JSON.parse(options.body)
 
-  try {
-    // Make a direct request to Ollama using Tauri's fetch
-    const response = await tauriFetch('http://localhost:11434/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama3.2',
-        messages: body.messages,
-        stream: true,
-      }),
-    })
+//   try {
+//     // Make a direct request to Ollama using Tauri's fetch
+//     const response = await tauriFetch('http://localhost:11434/api/chat', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({
+//         model: 'llama3.2:3b-instruct-q4_1',
+//         messages: body.messages,
+//         stream: true,
+//       }),
+//     })
 
-    console.log('Response status:', response.status)
-    console.log('Response body:', response.body)
+//     console.log('Response status:', response.status)
+//     console.log('Response body:', response.body)
 
-    // Return the raw response stream
-    return new Response(response.body, {
-      headers: response.headers,
-      status: response.status,
-    })
-  } catch (error) {
-    console.log('Error details:', error)
-    console.error('Error calling Ollama:', error)
-    throw error
-  }
-}
+//     // Return the raw response stream
+//     return new Response(response.body, {
+//       headers: response.headers,
+//       status: response.status,
+//     })
+//   } catch (error) {
+//     console.log('Error details:', error)
+//     console.error('Error calling Ollama:', error)
+//     throw error
+//   }
+// }
 
 const ollama = createOpenAI({
-  // baseURL: 'http://localhost:11434/v1',
+  baseURL: 'http://localhost:11434/v1',
 
-  fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+  fetch: async (input: RequestInfo | URL, init: RequestInit = {}) => {
     console.log('tauri fetch', input, init)
     return tauriFetch(input, init)
   },
@@ -63,15 +108,18 @@ const ollama = createOpenAI({
   apiKey: 'ollama',
 })
 
-const openai = createOpenAI({
-  fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-    console.log('tauri fetch', input, init)
-    return tauriFetch(input, init)
-  },
-  // apiKey: 'api key',
-})
+const fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const openaiApiKey = await invoke('get_openai_api_key')
 
-const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  console.log('openaiApiKey', openaiApiKey)
+  const openai = createOpenAI({
+    fetch: async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      console.log('tauri fetch', input, init)
+      return tauriFetch(input, init)
+    },
+    apiKey: await invoke('get_openai_api_key'),
+  })
+
   console.log('fetch', input, init)
 
   const options = init as RequestInit & { body: string }
@@ -99,6 +147,9 @@ const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     maxSteps: 5,
     // model: fireworks('accounts/fireworks/models/llama-v3p1-405b-instruct'),
     // model: fireworks('accounts/fireworks/models/deepseek-r1'),
+    // model: ollama('llama3.2:3b-instruct-q4_1', {
+    //   structuredOutputs: true,
+    // }),
     model: openai('gpt-4o', {
       structuredOutputs: true,
     }),
