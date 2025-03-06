@@ -6,12 +6,12 @@ mod embedding;
 mod imap_client;
 
 use anyhow::Result;
-use keyring::Entry;
 use sea_orm::ActiveModelTrait;
 use std::env;
-use tauri::{command, ActivationPolicy, Manager};
+use tauri::{command, ActivationPolicy};
 
-use entity::{message::Message, *};
+use entity::extensions::{MessageExt, SettingExt};
+use entity::{message::Model as Message, *};
 
 #[command]
 fn get_openai_api_key() -> String {
@@ -31,6 +31,65 @@ fn get_openai_api_key() -> String {
         env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY environment variable must be set");
 
     open_ai_api_key
+}
+
+#[command]
+async fn get_setting(id: String) -> Result<Option<setting::Model>, String> {
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+
+    let db = db::get_connection().await.map_err(|e| e.to_string())?;
+
+    setting::Entity::find()
+        .filter(setting::Column::Id.eq(id))
+        .one(&db)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[command]
+async fn set_setting(id: String, value: String) -> Result<setting::Model, String> {
+    use chrono::Utc;
+    use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+
+    let db = db::get_connection().await.map_err(|e| e.to_string())?;
+
+    // Check if setting exists
+    let setting_exists = setting::Entity::find()
+        .filter(setting::Column::Id.eq(&id))
+        .one(&db)
+        .await
+        .map_err(|e| e.to_string())?
+        .is_some();
+
+    let active_model = if setting_exists {
+        // Update existing setting using the extension trait
+        let existing = setting::Entity::find()
+            .filter(setting::Column::Id.eq(&id))
+            .one(&db)
+            .await
+            .map_err(|e| e.to_string())?
+            .unwrap();
+
+        let mut active_model = existing.into_active_model();
+        active_model.value = Set(value);
+        active_model.updated_at = Set(Utc::now());
+        active_model
+    } else {
+        // Create new setting
+        setting::ActiveModel {
+            id: Set(id),
+            value: Set(value),
+            updated_at: Set(Utc::now()),
+            ..Default::default()
+        }
+    };
+
+    // Save to database
+    if setting_exists {
+        active_model.update(&db).await.map_err(|e| e.to_string())
+    } else {
+        active_model.insert(&db).await.map_err(|e| e.to_string())
+    }
 }
 
 #[command]
@@ -90,6 +149,19 @@ async fn get_or_create_stronghold_password(
     }
 }
 
+#[command]
+async fn process_message(message: message::Model) -> Result<(), String> {
+    let db = db::get_connection().await.map_err(|e| e.to_string())?;
+
+    // Use the extension trait method
+    let active_model = message.into_active_model();
+
+    // Now you can save it
+    active_model.save(&db).await.map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // This should be called as early in the execution of the app as possible
@@ -101,57 +173,14 @@ async fn main() -> Result<()> {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_fs::init())
-        .setup(|app| {
-            let salt_path = app
-                .path()
-                .app_data_dir()
-                .expect("could not resolve app data path")
-                .join("salt.txt");
-
-            // Use a custom password hash function with faster Argon2 parameters
-            app.handle().plugin(
-                tauri_plugin_stronghold::Builder::new(move |password: &str| {
-                    use argon2::{Argon2, Params};
-
-                    // Read or create salt
-                    let salt = if std::path::Path::new(&salt_path).exists() {
-                        std::fs::read(&salt_path).unwrap_or_else(|_| {
-                            let s = uuid::Uuid::new_v4().as_bytes().to_vec();
-                            let _ = std::fs::write(&salt_path, &s);
-                            s
-                        })
-                    } else {
-                        let s = uuid::Uuid::new_v4().as_bytes().to_vec();
-                        let _ = std::fs::write(&salt_path, &s);
-                        s
-                    };
-
-                    // Fast Argon2 parameters for development
-                    let params = Params::new(
-                        1024, // Lower memory cost (1MB)
-                        1,    // Fewer iterations
-                        1,    // Fewer parallelism
-                        None,
-                    )
-                    .unwrap();
-
-                    // Hash the password
-                    let mut output = vec![0u8; 32]; // 32-byte output
-                    Argon2::default()
-                        .hash_password_into(password.as_bytes(), &salt, &mut output)
-                        .unwrap();
-
-                    output
-                })
-                .build(),
-            )?;
-            Ok(())
-        })
         .invoke_handler(tauri::generate_handler![
             get_openai_api_key,
             toggle_dock_icon, // Add the new command
             fetch_inbox_top,
             get_or_create_stronghold_password,
+            process_message,
+            get_setting,
+            set_setting,
         ]);
 
     // Set the activation policy to accessory on macOS to prevent the app from being shown in the dock

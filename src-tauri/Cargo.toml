@@ -98,18 +98,14 @@ keyring = { version = "3.6.2", features = [
     "windows-native",
     "sync-secret-service"
 ] }
-tauri-plugin-stronghold = "2.2.0"
 tauri-plugin-fs = "2"
-argon2 = "0.5.3"
+once_cell = "1.20.3"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
 rustflags = ["-C", "target-feature=+fp16,+fhm"]
 
 [profile.dev.package]
-"tauri-plugin-stronghold" = { opt-level = 3, debug = false }
-"stronghold-runtime" = { opt-level = 3, debug = false }
-"argon2" = { opt-level = 3, debug = false }
 "candle-nn" = { opt-level = 3, debug = false }
 "candle-core" = { opt-level = 3, debug = false }
 "candle-transformers" = { opt-level = 3, debug = false }

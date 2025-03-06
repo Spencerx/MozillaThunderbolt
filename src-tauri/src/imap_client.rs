@@ -2,7 +2,7 @@ use std::env;
 
 use anyhow::Result;
 use chrono::Utc;
-use entity::message::Message;
+use entity::message::Model as Message;
 use html2text::from_read;
 use mailparse::MailHeaderMap;
 use regex::Regex;

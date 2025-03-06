@@ -2,4 +2,9 @@
 
 pub mod prelude;
 
+pub mod extensions;
 pub mod message;
+pub mod setting;
+
+// Re-export the extensions for easy access
+pub use extensions::*;

@@ -4,19 +4,13 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "message")]
+#[sea_orm(table_name = "setting")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: Uuid,
-    pub date: DateTimeUtc,
-    pub subject: String,
+    pub id: String,
     #[sea_orm(column_type = "Text")]
-    pub body: String,
-    pub snippet: String,
-    #[sea_orm(column_type = "Text")]
-    pub clean_text: String,
-    pub clean_text_tokens_in: i32,
-    pub clean_text_tokens_out: i32,
+    pub value: String,
+    pub updated_at: DateTimeUtc,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

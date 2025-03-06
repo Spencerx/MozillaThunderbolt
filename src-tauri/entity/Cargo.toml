@@ -12,3 +12,4 @@ path = "src/mod.rs"
 sea-orm = { version = "1.1.6", features = ["macros"] }
 serde = "1.0.218"
 uuid = "1.14.0"
+chrono = "0.4.40"
