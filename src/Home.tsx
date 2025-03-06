@@ -3,6 +3,7 @@ import * as splitter from '@zag-js/splitter'
 import { createMemo, createSignal, createUniqueId } from 'solid-js'
 
 import Chat from './Chat'
+import { Button } from './components/button'
 
 export default function Home() {
   const [expanded, setExpanded] = createSignal(false)
@@ -40,6 +41,7 @@ export default function Home() {
             <div class="text-center">
               <h2 class="text-xl font-semibold text-gray-700">Left Panel</h2>
               <p class="text-gray-500 mt-2">Content for panel A goes here</p>
+              <Button variant="destructive">Click me</Button>
             </div>
           </div>
         </div>
