@@ -2,6 +2,22 @@
 
 Stack: Tauri + Solid + Typescript
 
+## Rust Setup
+
+```sh
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Use the Nightly toolchain
+rustup toolchain install nightly
+
+# Install sccache globally
+cargo install sccache
+
+# Install cmake
+brew install cmake # Mac only
+```
+
 ## Setup
 
 ```sh
@@ -13,7 +29,7 @@ bun install
 ## Run
 
 ```sh
-bun run tauri dev
+bun tauri dev
 ```
 
 ## Run Rust Examples
@@ -43,9 +59,6 @@ This will recreate the database deleting all data by rolling back all migrations
 ```sh
 sea-orm-cli migrate refresh
 ```
-
-
-
 
 ## Generate Entities (Database Models)
 

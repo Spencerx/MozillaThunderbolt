@@ -14,6 +14,7 @@ import Settings from './settings'
 import AccountsSettingsPage from './settings/accounts'
 import ModelsSettingsPage from './settings/models'
 import { DrizzleContextType } from './types'
+import UiKitPage from './ui-kit'
 
 const init = async () => {
   createTray()
@@ -83,6 +84,7 @@ export const App = () => {
               <Route path="/accounts" component={AccountsSettingsPage} />
               <Route path="/models" component={ModelsSettingsPage} />
             </Route>
+            <Route path="/ui-kit" component={UiKitPage} />
             <Route path="*404" component={NotFound} />
           </Router>
         </SettingsProvider>

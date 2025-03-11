@@ -20,10 +20,17 @@ export default function Home() {
   return (
     <>
       <Sidebar>
-        <Button as={A} href="/settings/accounts" variant="outline">
-          <Settings class="size-4" />
-          Settings
-        </Button>
+        <div class="flex flex-col gap-4">
+          <Button as={A} href="/settings/accounts" variant="outline">
+            <Settings class="size-4" />
+            Settings
+          </Button>
+          <div class="flex flex-col gap-2">
+            <Button as={A} href="/ui-kit" variant="ghost" class="justify-start">
+              UI Kit
+            </Button>
+          </div>
+        </div>
       </Sidebar>
       <div class="h-full w-full">
         <ChatUI chatHelpers={chatHelpers} />
