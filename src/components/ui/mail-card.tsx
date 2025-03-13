@@ -40,24 +40,39 @@ export function MailCard(props: MailCardProps) {
             )}
           </div>
 
-          <div className="flex items-center">{props.date && <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{props.date}</div>}</div>
+          <div className="flex items-center">
+            {props.date && <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{props.date}</div>}
+            <div className="ml-2 text-gray-500 transition-transform duration-300 ease-in-out">{props.isContentVisible ? '▼' : '►'}</div>
+          </div>
         </div>
       </div>
 
-      {props.content && props.isContentVisible && (
-        <>
-          <div className=" dark:border-gray-700" />
-          <div className="p-4">
-            <div className="text-sm text-gray-900 dark:text-gray-100">{typeof props.content === 'string' ? <p>{props.content}</p> : props.content}</div>
-          </div>
-        </>
-      )}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: props.isContentVisible ? '1fr' : '0fr',
+          transition: 'grid-template-rows 300ms ease-in-out',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <div className="overflow-hidden">
+          {props.content && (
+            <>
+              <div className="dark:border-gray-700" />
+              <div className="p-4">
+                <div className="text-sm text-gray-900 dark:text-gray-100">{typeof props.content === 'string' ? <p>{props.content}</p> : props.content}</div>
+              </div>
+            </>
+          )}
 
-      {props.footer && (
-        <div className="px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2 justify-start">{props.footer}</div>
+          {props.footer && (
+            <div className="px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2 justify-start">{props.footer}</div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
