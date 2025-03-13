@@ -34,9 +34,9 @@ export default function ChatUI({ chatHelpers }: ChatUIProps) {
             )
           } else if (message.role === 'user') {
             return (
-              <div key={i} className="p-4 rounded-tl-lg rounded-tr-lg rounded-bl-lg max-w-3/4 bg-indigo-100 text-gray-800 ml-auto">
+              <div key={i} className="p-4  rounded-md  max-w-3/4 bg-primary text-primary-foreground ml-auto">
                 <div className="space-y-2">
-                  <div className="text-gray-700 leading-relaxed">{message.content}</div>
+                  <div className="text-primary-foreground leading-relaxed">{message.content}</div>
                 </div>
               </div>
             )
