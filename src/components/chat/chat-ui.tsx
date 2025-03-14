@@ -1,5 +1,7 @@
 import type { UseChatHelpers } from '@ai-sdk/react'
+import { ArrowUp, Mic, Plus } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { Button } from '../ui/button'
 import { AgentToolResponse } from './agent-tool-response'
 
 interface ChatUIProps {
@@ -18,13 +20,13 @@ export default function ChatUI({ chatHelpers }: ChatUIProps) {
   }, [chatHelpers.messages])
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden max-w-[760px] mx-auto">
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {chatHelpers.messages.map((message, i) => {
           if (message.role === 'assistant') {
             return (
-              <div key={i} className="p-4 space-y-2 rounded-tl-lg rounded-tr-lg rounded-br-lg max-w-3/4 bg-white border border-gray-200 mr-auto">
-                {message.content && <div className="text-gray-700 leading-relaxed">{message.content}</div>}
+              <div key={i} className="space-y-2 p-4 rounded-md  bg-secondary mr-auto">
+                {message.content && <div className="text-secondary-foreground leading-relaxed">{message.content}</div>}
                 {message.parts
                   ?.filter((part) => part.type === 'tool-invocation')
                   .map((part, j) => (
@@ -34,9 +36,9 @@ export default function ChatUI({ chatHelpers }: ChatUIProps) {
             )
           } else if (message.role === 'user') {
             return (
-              <div key={i} className="p-4 rounded-tl-lg rounded-tr-lg rounded-bl-lg max-w-3/4 bg-indigo-100 text-gray-800 ml-auto">
+              <div key={i} className="p-4 rounded-md max-w-3/4 bg-primary text-primary-foreground ml-auto">
                 <div className="space-y-2">
-                  <div className="text-gray-700 leading-relaxed">{message.content}</div>
+                  <div className="text-primary-foreground leading-relaxed">{message.content}</div>
                 </div>
               </div>
             )
@@ -46,21 +48,22 @@ export default function ChatUI({ chatHelpers }: ChatUIProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-gray-200 p-4 bg-white">
-        <form onSubmit={chatHelpers.handleSubmit} className="flex gap-2">
-          <input
-            autoFocus
-            value={chatHelpers.input}
-            onChange={chatHelpers.handleInputChange}
-            placeholder="Say something..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <button
-            type="submit"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Send
-          </button>
+      <div className=" p-4">
+        <form onSubmit={chatHelpers.handleSubmit} className="flex flex-col gap-2 bg-secondary p-4 rounded-md">
+          <input autoFocus value={chatHelpers.input} onChange={chatHelpers.handleInputChange} placeholder="Say something..." className="flex-1 px-4 py-2   " />
+          <div className="flex gap-2 justify-between">
+            <div className="flex gap-2">
+              <Button variant="outline" className={`h-8 w-8 rounded-full p-0 flex items-center justify-center`}>
+                <Plus className="size-4" />
+              </Button>
+              <Button variant="outline" className={`h-8 w-8 rounded-full p-0 flex items-center justify-center`}>
+                <Mic className="size-4" />
+              </Button>
+            </div>
+            <Button type="submit" variant="default" className="h-8 w-8 rounded-full p-0 flex items-center justify-center">
+              <ArrowUp className="size-4" />
+            </Button>
+          </div>
         </form>
       </div>
     </div>
