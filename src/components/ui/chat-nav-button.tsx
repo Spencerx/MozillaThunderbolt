@@ -1,12 +1,10 @@
-import { Slot } from '@radix-ui/react-slot'
-import { Ellipsis, Trash2 } from 'lucide-react'
-import { useNavigate } from 'react-router'
-
-import * as React from 'react'
-
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { Slot } from '@radix-ui/react-slot'
+import { Ellipsis, Trash2 } from 'lucide-react'
+import * as React from 'react'
+import { useNavigate } from 'react-router'
 
 interface ChatNavButtonProps extends React.HTMLAttributes<HTMLDivElement> {
   chatTitle: string

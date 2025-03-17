@@ -2,7 +2,6 @@ import { ArrowLeft, PanelLeft, PanelRight, Paperclip, SquarePen } from 'lucide-r
 import { Link } from 'react-router'
 import { Sidebar } from './components/sidebar'
 import { Button } from './components/ui/button'
-import { ChatNavButton } from './components/ui/chat-nav-button'
 import { MailCard, MailCardList } from './components/ui/mail-card'
 import { MailThreadButton } from './components/ui/mail-thread-button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select'
@@ -86,7 +85,6 @@ export default function UiKitPage() {
               <Link to="/devtools">Dev Tools</Link>
             </Button>
           </div>
-          <ChatNavButton chatTitle="Chat Title Display" />
 
           <UserNavButton />
         </div>
