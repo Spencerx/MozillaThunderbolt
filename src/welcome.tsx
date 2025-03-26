@@ -2,12 +2,13 @@ import { useSettings } from '@/settings/provider'
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamObject } from 'ai'
 import { isNotNull } from 'drizzle-orm'
-import { Calendar, CheckCircle2, ChevronDown, Mail, MessageSquare, RefreshCw, Square } from 'lucide-react'
+import { CheckCircle2, ChevronDown, RefreshCw, Square } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
 import { Button } from './components/ui/button'
 import { Skeleton } from './components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip'
 import { useDrizzle } from './db/provider'
 import { todosTable } from './db/schema'
 import { useImap } from './imap/provider'
@@ -156,7 +157,16 @@ export default function WelcomePage() {
               <div className="bg-primary/10 p-3 rounded-full">
                 <CheckCircle2 className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold">Your Action Items</h2>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <h2 className="text-xl font-semibold">Your Action Items</h2>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p className="text-sm">Auto-generated from your inbox</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <Button variant="ghost" size="icon" onClick={() => fetchInboxData(true)} className="cursor-pointer" disabled={isRefreshing}>
               <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -212,113 +222,6 @@ export default function WelcomePage() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Inbox Summary Section - Commented out for later
-        <div className="mt-6 bg-card rounded-lg shadow-sm p-6 border border-border hover:border-primary/20 transition-all hover:shadow-md">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Inbox className="h-6 w-6 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold">Inbox Summary</h2>
-          </div>
-          <div className="space-y-4">
-            {loading ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-5 w-[180px]" />
-                  <Skeleton className="h-5 w-[80px]" />
-                </div>
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                  <Skeleton className="h-full w-[65%]" />
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="bg-secondary/30 p-4 rounded-md">
-                    <Skeleton className="h-4 w-[60%] mb-2" />
-                    <Skeleton className="h-6 w-[40%]" />
-                  </div>
-                  <div className="bg-secondary/30 p-4 rounded-md">
-                    <Skeleton className="h-4 w-[70%] mb-2" />
-                    <Skeleton className="h-6 w-[50%]" />
-                  </div>
-                  <div className="bg-secondary/30 p-4 rounded-md">
-                    <Skeleton className="h-4 w-[80%] mb-2" />
-                    <Skeleton className="h-6 w-[45%]" />
-                  </div>
-                </div>
-                <div className="space-y-3 mt-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-[92%]" />
-                  <Skeleton className="h-4 w-[85%]" />
-                </div>
-              </>
-            ) : (
-              <div className="prose prose-sm dark:prose-invert">{inboxSummary || 'No inbox summary available.'}</div>
-            )}
-          </div>
-        </div>
-        */}
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-card rounded-lg shadow-sm p-6 border border-border hover:border-primary/20 transition-all hover:shadow-md">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Mail className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-xl font-semibold">Recent Emails</h2>
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[85%]" />
-              <Skeleton className="h-4 w-[70%]" />
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg shadow-sm p-6 border border-border hover:border-primary/20 transition-all hover:shadow-md">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-xl font-semibold">Today's Schedule</h2>
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[90%]" />
-              <Skeleton className="h-4 w-[75%]" />
-            </div>
-          </div>
-
-          <div className="bg-card rounded-lg shadow-sm p-6 border border-border hover:border-primary/20 transition-all hover:shadow-md">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <MessageSquare className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="text-xl font-semibold">Recent Chats</h2>
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-[80%]" />
-              <Skeleton className="h-4 w-[65%]" />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 bg-card rounded-lg shadow-sm p-6 border border-border">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="p-4 bg-primary/5 hover:bg-primary/10 rounded-md flex flex-col items-center justify-center transition-colors">
-              <span className="text-sm font-medium">New Chat</span>
-            </button>
-            <button className="p-4 bg-primary/5 hover:bg-primary/10 rounded-md flex flex-col items-center justify-center transition-colors">
-              <span className="text-sm font-medium">Check Email</span>
-            </button>
-            <button className="p-4 bg-primary/5 hover:bg-primary/10 rounded-md flex flex-col items-center justify-center transition-colors">
-              <span className="text-sm font-medium">Settings</span>
-            </button>
-            <button className="p-4 bg-primary/5 hover:bg-primary/10 rounded-md flex flex-col items-center justify-center transition-colors">
-              <span className="text-sm font-medium">Help</span>
-            </button>
           </div>
         </div>
       </div>
