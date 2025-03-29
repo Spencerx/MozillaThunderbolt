@@ -9,8 +9,9 @@ import { Button } from './components/ui/button'
 import { Skeleton } from './components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip'
 import { useDrizzle } from './db/provider'
-import { modelsTable, todosTable } from './db/schema'
+import { emailMessagesTable, modelsTable, todosTable } from './db/schema'
 import { useImap } from './imap/provider'
+import { ImapSyncer } from './imap/sync'
 import { useSettings } from './settings/provider'
 import { useSideview } from './sideview/provider'
 
@@ -20,7 +21,7 @@ export default function WelcomePage() {
   const { db } = useDrizzle()
   const { setSideview } = useSideview()
   const [_inboxSummary, setInboxSummary] = useState<string | null>(null)
-  const [toDoList, setToDoList] = useState<{ item: string; imap_id: string | null }[]>([])
+  const [toDoList, setToDoList] = useState<{ item: string; emailMessageId: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showAllTodos, setShowAllTodos] = useState(false)
@@ -47,10 +48,15 @@ export default function WelcomePage() {
         console.log('Regenerating todos')
 
         // Delete existing todos with email_thread_id
-        await db.delete(todosTable).where(isNotNull(todosTable.imapId))
+        await db.delete(todosTable).where(isNotNull(todosTable.emailMessageId))
 
         // Fetch emails from inbox
-        const { messages } = await imapClient.fetchMessages('INBOX', 1, 10)
+        // const { messages } = await imapClient.fetchMessages('INBOX', 1, 10)
+
+        const syncer = new ImapSyncer(db, 'INBOX', 10)
+        await syncer.syncPage(1, 10)
+
+        const messages = await db.select().from(emailMessagesTable).where(eq(emailMessagesTable.mailbox, 'INBOX'))
 
         const model = await db.select().from(modelsTable).where(eq(modelsTable.isSystem, 1)).get()
 
@@ -69,7 +75,7 @@ export default function WelcomePage() {
         const emailsContext = messages
           .map(
             (message) =>
-              `IMAP ID: ${message.imapId}\nSubject: ${message.subject || 'No subject'}\nFrom: ${message.fromAddress || 'Unknown'}\nSnippet: ${message.textBody?.substring(0, 300) || 'No content'}`
+              `Message ID: ${message.id}\nSubject: ${message.subject || 'No subject'}\nFrom: ${message.fromAddress || 'Unknown'}\nSnippet: ${message.textBody?.substring(0, 300) || 'No content'}`
           )
           .join('\n\n')
 
@@ -84,7 +90,7 @@ export default function WelcomePage() {
           ],
           output: 'array',
           schema: z.object({
-            imap_id: z.string(),
+            emailMessageId: z.string(),
             item: z.string(),
           }),
           onError(error) {
@@ -108,7 +114,7 @@ export default function WelcomePage() {
           await db.insert(todosTable).values({
             id: uuidv7(),
             item: todo.item,
-            imapId: todo.imap_id,
+            emailMessageId: todo.emailMessageId,
           })
         }
 
@@ -119,8 +125,8 @@ export default function WelcomePage() {
         })
       } else {
         // If we don't need to regenerate todos, just fetch them from the database
-        const todos = await db.select().from(todosTable).orderBy(todosTable.id)
-        setToDoList(todos.map((todo) => ({ item: todo.item, imap_id: todo.imapId })))
+        const todos = await db.select().from(todosTable).where(isNotNull(todosTable.emailMessageId)).orderBy(todosTable.id)
+        setToDoList(todos.map((todo) => ({ item: todo.item, emailMessageId: todo.emailMessageId })))
         setLoading(false)
       }
 
@@ -193,7 +199,7 @@ export default function WelcomePage() {
                       <div
                         key={index}
                         className="p-4 bg-secondary/10 hover:bg-secondary/80 rounded-lg flex items-start gap-3 cursor-pointer transition-colors group"
-                        onClick={() => todo.imap_id && setSideview('imap', todo.imap_id)}
+                        onClick={() => todo.emailMessageId && setSideview('message', todo.emailMessageId)}
                       >
                         <Square className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 group-hover:text-primary/80 transition-colors" />
                         <div className="flex-1">

@@ -1,6 +1,6 @@
 /**
  * This file is auto-generated. Do not edit directly.
- * Generated on: 2025-03-28T22:51:00.959Z
+ * Generated on: 2025-03-29T00:50:14.248Z
  */
 
 export interface Migration {
@@ -24,5 +24,15 @@ export const migrations: Migration[] = [
     "hash": "0002_shocking_lady_vermin",
     "name": "0002_shocking_lady_vermin.sql",
     "sql": "PRAGMA foreign_keys=OFF;--> statement-breakpoint\nCREATE TABLE `__new_email_messages_to_addresses` (\n\t`email_message_id` text NOT NULL,\n\t`email_address_id` text NOT NULL,\n\t`type` text NOT NULL,\n\tPRIMARY KEY(`email_message_id`, `email_address_id`),\n\tFOREIGN KEY (`email_message_id`) REFERENCES `email_messages`(`id`) ON UPDATE cascade ON DELETE cascade,\n\tFOREIGN KEY (`email_address_id`) REFERENCES `email_addresses`(`address`) ON UPDATE cascade ON DELETE cascade\n);\n--> statement-breakpoint\nINSERT INTO `__new_email_messages_to_addresses`(\"email_message_id\", \"email_address_id\", \"type\") SELECT \"email_message_id\", \"email_address_id\", \"type\" FROM `email_messages_to_addresses`;--> statement-breakpoint\nDROP TABLE `email_messages_to_addresses`;--> statement-breakpoint\nALTER TABLE `__new_email_messages_to_addresses` RENAME TO `email_messages_to_addresses`;--> statement-breakpoint\nPRAGMA foreign_keys=ON;"
+  },
+  {
+    "hash": "0003_massive_karen_page",
+    "name": "0003_massive_karen_page.sql",
+    "sql": "ALTER TABLE `email_messages` ADD `mailbox` text NOT NULL;"
+  },
+  {
+    "hash": "0004_great_sprite",
+    "name": "0004_great_sprite.sql",
+    "sql": "ALTER TABLE `todos` ADD `email_message_id` text REFERENCES email_messages(id);--> statement-breakpoint\nCREATE UNIQUE INDEX `todos_email_message_id_unique` ON `todos` (`email_message_id`);--> statement-breakpoint\nALTER TABLE `todos` DROP COLUMN `imap_id`;"
   }
 ];

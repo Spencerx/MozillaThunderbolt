@@ -4,7 +4,6 @@ use imap::{self, ImapConnection, Session};
 use mail_parser::MessageParser;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 

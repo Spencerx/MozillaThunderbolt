@@ -211,6 +211,7 @@ export class ImapSyncer {
       parts: {} as ParsedEmail,
       fromAddress: message.fromAddress.address.toLowerCase(), // Set the fromAddress to the lowercase email
       emailThreadId: null,
+      mailbox: this.mailbox,
     }))
 
     // Batch insert all messages

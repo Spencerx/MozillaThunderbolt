@@ -77,12 +77,15 @@ export const emailMessagesTable = sqliteTable('email_messages', {
   sentAt: integer('sent_at').notNull(),
   fromAddress: text('from_address').references(() => emailAddressesTable.address),
   emailThreadId: text('email_thread_id').references(() => emailThreadsTable.id, { onDelete: 'set null', onUpdate: 'cascade' }),
+  mailbox: text('mailbox').notNull(),
 })
 
 export const todosTable = sqliteTable('todos', {
   id: text('id').primaryKey().notNull().unique(),
   item: text('item').notNull(),
-  imapId: text('imap_id'), // We don't use a foreign key here because the email message might not exist in the database yet
+  emailMessageId: text('email_message_id')
+    .unique()
+    .references(() => emailMessagesTable.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
 })
 
 export const modelsTable = sqliteTable('models', {

@@ -1,0 +1,1 @@
+ALTER TABLE `email_messages` ADD `mailbox` text NOT NULL;
