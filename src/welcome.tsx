@@ -12,7 +12,7 @@ import { useDrizzle } from './db/provider'
 import { emailMessagesTable, modelsTable, todosTable } from './db/tables'
 import { useImap } from './imap/provider'
 import { ImapSyncer } from './imap/sync'
-import { useSetting } from './settings/provider'
+import { useSetting } from './settings/hooks'
 import { useSideview } from './sideview/provider'
 
 export default function WelcomePage() {
@@ -143,8 +143,10 @@ export default function WelcomePage() {
   }
 
   useEffect(() => {
-    fetchInboxData()
-  }, [])
+    if (!isLoadingLastGeneratedTodos) {
+      fetchInboxData()
+    }
+  }, [isLoadingLastGeneratedTodos])
 
   const displayedTodos = showAllTodos ? toDoList : toDoList.slice(0, 3)
 

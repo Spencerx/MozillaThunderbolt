@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { useDrizzle } from '@/db/provider'
 import { settingsTable } from '@/db/tables'
 import { eq } from 'drizzle-orm'
-import { useDrizzle } from '@/db/provider'
 
 export function useSetting<T = string>(
   key: string
@@ -26,9 +26,15 @@ export function useSetting<T = string>(
   const mutation = useMutation({
     mutationFn: async (updatedValue: T) => {
       await db
-        .update(settingsTable)
-        .set({ value: updatedValue as unknown as string })
-        .where(eq(settingsTable.key, key))
+        .insert(settingsTable)
+        .values({
+          key,
+          value: updatedValue as unknown as string,
+        })
+        .onConflictDoUpdate({
+          target: settingsTable.key,
+          set: { value: updatedValue as unknown as string },
+        })
     },
     onMutate: async (updatedValue) => {
       await queryClient.cancelQueries({ queryKey: ['settings', key] })
@@ -41,8 +47,6 @@ export function useSetting<T = string>(
   const setValue = async (value: T) => {
     await mutation.mutateAsync(value)
   }
-
-  console.log('key', key, value)
 
   return {
     value: value as T | null,
