@@ -2,10 +2,14 @@ import { Model, SaveMessagesFunction, Setting } from '@/types'
 import { createFireworks } from '@ai-sdk/fireworks'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { convertToModelMessages, LanguageModel, streamText, ToolInvocation, UIMessage, maxSteps, wrapLanguageModel, extractReasoningMiddleware } from 'ai'
+import { convertToModelMessages, LanguageModel, streamText, ToolInvocation, UIMessage, wrapLanguageModel, extractReasoningMiddleware } from 'ai'
 import { createDeepInfra } from '@ai-sdk/deepinfra'
+import { v7 as uuidv7 } from 'uuid'
 
 import z from 'zod'
+import { SqliteRemoteDatabase } from 'drizzle-orm/sqlite-proxy'
+import { todosTable } from '@/db/tables'
+import { eq, inArray } from 'drizzle-orm'
 
 export type ToolInvocationWithResult<T = object> = ToolInvocation & {
   result: T
@@ -38,6 +42,7 @@ export const ollama = createOpenAI({
 })
 
 type AiFetchStreamingResponseOptions = {
+  db: SqliteRemoteDatabase
   init: RequestInit
   saveMessages: SaveMessagesFunction
   model: Model
@@ -99,7 +104,7 @@ export const createModel = (modelConfig: Model): LanguageModel => {
   }
 }
 
-export const aiFetchStreamingResponse = async ({ init, saveMessages, model: modelConfig, settings }: AiFetchStreamingResponseOptions) => {
+export const aiFetchStreamingResponse = async ({ db, init, saveMessages, model: modelConfig, settings }: AiFetchStreamingResponseOptions) => {
   try {
     const baseModel = await createModel(modelConfig)
 
@@ -169,11 +174,49 @@ export const aiFetchStreamingResponse = async ({ init, saveMessages, model: mode
             }
           },
         },
+        addTasks: {
+          description: "Add a task to the user's task (to do) list.",
+          parameters: z.object({
+            tasks: z.array(z.string()).describe("The tasks to add to the user's task (to do) list."),
+          }),
+          execute: async (params) => {
+            const tasks = await db
+              .insert(todosTable)
+              .values(
+                params.tasks.map((task: string) => ({
+                  id: uuidv7(),
+                  item: task,
+                }))
+              )
+              .returning()
+            return tasks
+          },
+        },
+        getTasks: {
+          description: "Get the user's task (to do) list.",
+          parameters: z.object({}),
+          execute: async () => {
+            const tasks = await db.select().from(todosTable)
+            return tasks
+          },
+        },
+        deleteTasks: {
+          description: "Delete a task from the user's task (to do) list.",
+          parameters: z.object({
+            taskIds: z.array(z.string()).describe("The IDs of the tasks to delete from the user's task (to do) list."),
+          }),
+          execute: async (params) => {
+            await db.delete(todosTable).where(inArray(todosTable.id, params.taskIds))
+            return {
+              success: true,
+            }
+          },
+        },
       },
       // continueUntil: hasToolCall('answer'),
       // continueUntil: maxSteps(5),
 
-      toolChoice: 'required',
+      // toolChoice: 'required',
     })
 
     return result.toUIMessageStreamResponse({

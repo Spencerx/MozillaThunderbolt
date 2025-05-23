@@ -1,5 +1,5 @@
 import { ParsedEmail } from '@/types'
-import { Attachment, Message } from 'ai'
+import { UIMessage } from 'ai'
 import { sql } from 'drizzle-orm'
 import { customType, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
@@ -35,10 +35,8 @@ export const chatMessagesTable = sqliteTable('chat_messages', {
   id: text('id').primaryKey().notNull().unique(),
   // createdat can be derived from uuid v7 id
   content: text('content').notNull(),
-  attachments: text('attachments', { mode: 'json' }).$type<Attachment[]>(),
-  role: text('role').notNull().$type<Message['role']>(),
-  annotations: text('annotations', { mode: 'json' }).$type<Message['annotations']>(),
-  parts: text('parts', { mode: 'json' }).$type<Message['parts']>(),
+  role: text('role').notNull().$type<UIMessage['role']>(),
+  parts: text('parts', { mode: 'json' }).$type<UIMessage['parts']>(),
   chatThreadId: text('chat_thread_id')
     .notNull()
     .references(() => chatThreadsTable.id, { onDelete: 'cascade', onUpdate: 'cascade' }),

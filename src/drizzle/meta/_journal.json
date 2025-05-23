@@ -15,6 +15,13 @@
       "when": 1743805404452,
       "tag": "0001_many_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1748018476896,
+      "tag": "0002_legal_falcon",
+      "breakpoints": true
     }
   ]
 }

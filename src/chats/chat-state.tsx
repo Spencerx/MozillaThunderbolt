@@ -84,6 +84,7 @@ export default function ChatState({ id, models, settings, initialMessages, saveM
         const model = await getSelectedModel(db as unknown as SqliteRemoteDatabase)
 
         return aiFetchStreamingResponse({
+          db: db as unknown as SqliteRemoteDatabase,
           init,
           saveMessages,
           model,

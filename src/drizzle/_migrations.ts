@@ -18,5 +18,10 @@ export const migrations: Migration[] = [
     "hash": "0001_many_zemo",
     "name": "0001_many_zemo.sql",
     "sql": "ALTER TABLE `models` ADD `name` text NOT NULL;"
+  },
+  {
+    "hash": "0002_legal_falcon",
+    "name": "0002_legal_falcon.sql",
+    "sql": "ALTER TABLE `chat_messages` DROP COLUMN `attachments`;--> statement-breakpoint\nALTER TABLE `chat_messages` DROP COLUMN `annotations`;"
   }
 ];
