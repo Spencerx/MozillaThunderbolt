@@ -5,7 +5,7 @@ import { convertDbChatMessageToUIMessage, convertUIMessageToDbChatMessage } from
 import { SaveMessagesFunction } from '@/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { UIMessage, generateText } from 'ai'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { useParams } from 'react-router'
 import Chat from './chat'
 
@@ -42,9 +42,17 @@ export default function ChatDetailPage() {
       }
 
       // Insert messages
-      await db.insert(chatMessagesTable).values(dbChatMessages).onConflictDoNothing({
-        target: chatMessagesTable.id,
-      })
+      await db
+        .insert(chatMessagesTable)
+        .values(dbChatMessages)
+        .onConflictDoUpdate({
+          target: chatMessagesTable.id,
+          set: {
+            content: sql`excluded.content`,
+            parts: sql`excluded.parts`,
+            role: sql`excluded.role`,
+          },
+        })
 
       if (thread.title !== 'New Chat') {
         return dbChatMessages

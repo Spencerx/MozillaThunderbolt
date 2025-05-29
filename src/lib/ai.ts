@@ -171,9 +171,6 @@ export const aiFetchStreamingResponse = async ({ init, saveMessages, model: mode
     //   transport: new StreamableHTTPClientTransport(new URL('https://server.smithery.ai/@isdaniel/mcp_weather_server/mcp?api_key=LOL_OOPS')),
     // })
 
-    // Wait longer for the SSE connection to fully establish
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
     // @todo cache this?
     const toolset: ToolSet = {
       ...createToolset(tools),
