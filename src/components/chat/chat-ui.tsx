@@ -27,7 +27,7 @@ interface SuggestionButtonProps {
 const SuggestionButton = ({ label, prompt, onSelect }: SuggestionButtonProps) => (
   <Button
     variant="outline"
-    className="bg-white text-sm text-gray-700 rounded-full px-3 py-1.5 border border-gray-200 shadow-sm hover:bg-gray-50 whitespace-nowrap flex-shrink-0"
+    className="bg-card text-sm text-foreground rounded-full px-3 py-1.5 border border-border shadow-sm hover:bg-accent whitespace-nowrap flex-shrink-0"
     onClick={() => onSelect(prompt)}
   >
     {label}
@@ -81,7 +81,7 @@ export default function ChatUI({ chatHelpers, models, selectedModel, onModelChan
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden max-w-[728px] mx-auto">
+    <div className="flex flex-col h-full bg-background overflow-hidden max-w-[728px] mx-auto">
       <AnimatePresence>
         {hasMessages && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 p-4 overflow-y-auto space-y-4">

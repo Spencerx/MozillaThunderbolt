@@ -24,6 +24,7 @@ import { ImapProvider } from './imap/provider'
 import Layout from './layout'
 import { createAppDataDir } from './lib/fs'
 import { MCPProvider } from './lib/mcp-provider'
+import { ThemeProvider } from '@/lib/theme-provider'
 import { TrayManager, TrayProvider } from './lib/tray'
 import Loading from './loading'
 import SettingsLayout from './settings/layout'
@@ -145,22 +146,24 @@ export const App = () => {
   }
 
   return (
-    <TrayProvider tray={initData.tray} window={initData.window}>
-      <QueryClientProvider client={queryClient}>
-        <DrizzleProvider context={{ db: initData.db, sqlite: initData.sqlite }}>
-          <MCPProvider>
-            <ImapProvider client={initData.imap}>
-              <ImapSyncProvider client={initData.imapSync}>
-                <SidebarProvider>
-                  <SideviewProvider sideviewType={initData.sideviewType} sideviewId={initData.sideviewId}>
-                    <AppContent initData={initData} />
-                  </SideviewProvider>
-                </SidebarProvider>
-              </ImapSyncProvider>
-            </ImapProvider>
-          </MCPProvider>
-        </DrizzleProvider>
-      </QueryClientProvider>
-    </TrayProvider>
+    <ThemeProvider defaultTheme="system" storageKey="thunderbolt-ui-theme">
+      <TrayProvider tray={initData.tray} window={initData.window}>
+        <QueryClientProvider client={queryClient}>
+          <DrizzleProvider context={{ db: initData.db, sqlite: initData.sqlite }}>
+            <MCPProvider>
+              <ImapProvider client={initData.imap}>
+                <ImapSyncProvider client={initData.imapSync}>
+                  <SidebarProvider>
+                    <SideviewProvider sideviewType={initData.sideviewType} sideviewId={initData.sideviewId}>
+                      <AppContent initData={initData} />
+                    </SideviewProvider>
+                  </SidebarProvider>
+                </ImapSyncProvider>
+              </ImapProvider>
+            </MCPProvider>
+          </DrizzleProvider>
+        </QueryClientProvider>
+      </TrayProvider>
+    </ThemeProvider>
   )
 }

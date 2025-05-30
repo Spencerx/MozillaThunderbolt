@@ -12,6 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -224,6 +225,17 @@ export default function PreferencesSettingsPage() {
   return (
     <div className="flex flex-col gap-4 p-4 w-full max-w-[760px] mx-auto">
       <h1 className="text-4xl font-bold tracking-tight mb-2 text-primary">Preferences</h1>
+
+      <h3 className="text-lg font-semibold">Appearance</h3>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Theme</label>
+            <ThemeToggle />
+            <p className="text-sm text-muted-foreground">Choose your preferred theme. System will use your device's system preference.</p>
+          </div>
+        </CardContent>
+      </Card>
 
       <h3 className="text-lg font-semibold">Personal Information</h3>
       <Card>
