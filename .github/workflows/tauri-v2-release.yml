@@ -72,13 +72,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
-      - name: Install x86_64-apple-darwin target for mac and build Tauri binaries
+      - name: Build Tauri app for macOS
         if: matrix.os == 'macos-latest'
         run: |
-          rustup target add x86_64-apple-darwin
           bun install
-          bun tauri build -- --target x86_64-apple-darwin
-          bun tauri build -- --target aarch64-apple-darwin
+          bun tauri build
         env:
           RUSTFLAGS: ""
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
