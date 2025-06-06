@@ -11,6 +11,12 @@ pub struct BridgeState {
     pub pending_responses: Arc<DashMap<String, oneshot::Sender<std::result::Result<Value, String>>>>,
 }
 
+impl Default for BridgeState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BridgeState {
     pub fn new() -> Self {
         Self {
@@ -199,7 +205,7 @@ pub async fn send_request_and_wait(
         let error_msg = if e.to_string().contains("NotConnected") {
             "Thunderbird is not connected. Please ensure the Thunderbird extension is installed and connected.".to_string()
         } else {
-            format!("Failed to send request: {}", e)
+            format!("Failed to send request: {e}")
         };
         return Err(error_msg);
     }

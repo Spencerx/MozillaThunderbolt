@@ -41,6 +41,12 @@ pub struct WebSocketServer {
     message_rx: Arc<RwLock<mpsc::UnboundedReceiver<(Uuid, ThunderbirdMessage)>>>,
 }
 
+impl Default for WebSocketServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WebSocketServer {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();

@@ -52,7 +52,7 @@ pub async fn init_imap(
     // Test connection
     imap_client
         .connect()
-        .map_err(|e| format!("Failed to connect to IMAP server: {}", e))?;
+        .map_err(|e| format!("Failed to connect to IMAP server: {e}"))?;
 
     // Store client in state
     state_guard.imap_client = Some(imap_client);
@@ -94,7 +94,7 @@ pub async fn init_imap_sync(
     // Connect the sync client
     sync_imap_client
         .connect()
-        .map_err(|e| format!("Failed to connect sync client: {}", e))?;
+        .map_err(|e| format!("Failed to connect sync client: {e}"))?;
 
     // Get database pool
     let pool = state_guard.db_pool.as_ref().unwrap();
@@ -103,7 +103,7 @@ pub async fn init_imap_sync(
     let db_conn = pool
         .get_database()
         .connect()
-        .map_err(|e| format!("Failed to create connection for sync: {}", e))?;
+        .map_err(|e| format!("Failed to create connection for sync: {e}"))?;
 
     // Create the ImapSync instance using the database connection
     let imap_sync = ImapSync::new(sync_imap_client, db_conn);
@@ -127,10 +127,10 @@ pub async fn list_mailboxes(app_handle: tauri::AppHandle) -> Result<serde_json::
     // List mailboxes
     let mailboxes = imap_client
         .list_mailboxes()
-        .map_err(|e| format!("Failed to list mailboxes: {}", e))?;
+        .map_err(|e| format!("Failed to list mailboxes: {e}"))?;
 
     // Convert the HashMap to a JSON value
-    serde_json::to_value(&mailboxes).map_err(|e| format!("Failed to serialize mailboxes: {}", e))
+    serde_json::to_value(&mailboxes).map_err(|e| format!("Failed to serialize mailboxes: {e}"))
 }
 
 #[command]
@@ -151,15 +151,15 @@ pub async fn fetch_inbox(
     // Fetch inbox messages
     let messages = imap_client
         .fetch_inbox("INBOX", None, count)
-        .map_err(|e| format!("Failed to fetch inbox: {}", e))?;
+        .map_err(|e| format!("Failed to fetch inbox: {e}"))?;
 
     // Process all messages using the utility function
     let processed_messages = messages_to_json_values(&messages)
-        .map_err(|e| format!("Failed to convert messages to JSON: {}", e))?;
+        .map_err(|e| format!("Failed to convert messages to JSON: {e}"))?;
 
     // Convert the processed messages to a single JSON value
     serde_json::to_value(&processed_messages)
-        .map_err(|e| format!("Failed to serialize messages: {}", e))
+        .map_err(|e| format!("Failed to serialize messages: {e}"))
 }
 
 #[command]
@@ -182,7 +182,7 @@ pub async fn fetch_messages(
     // Fetch messages from specified mailbox
     imap_client
         .fetch_messages(&mailbox, start_index, count)
-        .map_err(|e| format!("Failed to fetch messages from {}: {}", mailbox, e))
+        .map_err(|e| format!("Failed to fetch messages from {mailbox}: {e}"))
 }
 
 #[command]
@@ -211,7 +211,7 @@ pub async fn sync_mailbox(
             Some(
                 DateTime::parse_from_rfc3339(&since_str)
                     .map(|dt| dt.with_timezone(&Utc))
-                    .map_err(|e| format!("Failed to parse date: {}", e))?,
+                    .map_err(|e| format!("Failed to parse date: {e}"))?,
             )
         } else {
             None
@@ -221,10 +221,10 @@ pub async fn sync_mailbox(
         sync_client
             .sync_mailbox(&mailbox, page_size, since_date)
             .await
-            .map_err(|e| format!("Failed to sync mailbox: {}", e))
+            .map_err(|e| format!("Failed to sync mailbox: {e}"))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?;
+    .map_err(|e| format!("Task error: {e}"))?;
 
     result
 }
@@ -259,7 +259,7 @@ pub async fn set_bridge_enabled(app_handle: tauri::AppHandle, enabled: bool) -> 
     if let Some(bridge_server) = &state_guard.bridge_server {
         let mut server = bridge_server.lock().await;
         server.set_enabled(enabled).await
-            .map_err(|e| format!("Failed to set bridge state: {}", e))?;
+            .map_err(|e| format!("Failed to set bridge state: {e}"))?;
     } else {
         return Err("Bridge not initialized. Call init_bridge first.".to_string());
     }

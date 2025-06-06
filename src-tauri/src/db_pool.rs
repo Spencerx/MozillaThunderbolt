@@ -44,7 +44,7 @@ impl DbPool {
             .await?;
 
         // Consume the result (contains the string "wal")
-        while let Some(_) = rows.next().await? {
+        while (rows.next().await?).is_some() {
             // We don't need to do anything with the result
         }
 

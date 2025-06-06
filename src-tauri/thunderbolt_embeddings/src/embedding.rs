@@ -50,7 +50,7 @@ impl Embedder {
     pub fn generate_embedding(&self, text: &str) -> anyhow::Result<Tensor> {
         // Tokenize input with truncation
         // E5 models typically use a specific format - add the prefix
-        let formatted_text = format!("passage: {}", text);
+        let formatted_text = format!("passage: {text}");
         let encoding = self
             .tokenizer
             .encode(formatted_text, true)
@@ -94,7 +94,7 @@ pub fn generate_embedding(embedder: &Embedder, text: &str) -> anyhow::Result<Vec
     let tensor = embedder.generate_embedding(text)?;
 
     // Convert tensor to Vec<f32> and map the error type to anyhow
-    tensor.to_vec1().map_err(|e| anyhow::Error::new(e))
+    tensor.to_vec1().map_err(anyhow::Error::new)
 }
 
 fn normalize_l2(v: &Tensor) -> candle::Result<Tensor> {

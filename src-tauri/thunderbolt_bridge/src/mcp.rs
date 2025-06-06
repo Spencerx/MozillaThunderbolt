@@ -39,7 +39,7 @@ impl ThunderboltTools {
             5000, // 5 second timeout
         ).await {
             Ok(result) => Ok(result),
-            Err(e) => Err(format!("Thunderbird error: {}", e)),
+            Err(e) => Err(format!("Thunderbird error: {e}")),
         }
     }
     
@@ -52,7 +52,7 @@ impl ThunderboltTools {
             5000, // 5 second timeout
         ).await {
             Ok(result) => Ok(result),
-            Err(e) => Err(format!("Thunderbird error: {}", e)),
+            Err(e) => Err(format!("Thunderbird error: {e}")),
         }
     }
     
@@ -65,7 +65,7 @@ impl ThunderboltTools {
             5000, // 5 second timeout
         ).await {
             Ok(result) => Ok(result),
-            Err(e) => Err(format!("Thunderbird error: {}", e)),
+            Err(e) => Err(format!("Thunderbird error: {e}")),
         }
     }
 }

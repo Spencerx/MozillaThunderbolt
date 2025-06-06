@@ -4,7 +4,6 @@ use chrono::{DateTime, TimeZone, Utc};
 use libsql::Connection;
 use mail_parser::Message;
 use regex::Regex;
-use serde_json;
 use uuid::Uuid;
 
 /// ImapSync provides functionality to synchronize IMAP messages with a local SQLite database
@@ -97,16 +96,16 @@ impl ImapSync {
         count: usize,
         since: Option<DateTime<Utc>>,
     ) -> Result<(usize, bool)> {
-        println!("Syncing messages from {} (index {})", mailbox, start_index);
+        println!("Syncing messages from {mailbox} (index {start_index})");
 
         // Fetch messages from mailbox in reverse order (newest first)
         let messages = self
             .imap_client
             .fetch_inbox(mailbox, Some(start_index), Some(count))
-            .with_context(|| format!("Failed to fetch messages from {}", mailbox))?;
+            .with_context(|| format!("Failed to fetch messages from {mailbox}"))?;
 
         let messages_count = messages.len();
-        println!("Retrieved {} messages", messages_count);
+        println!("Retrieved {messages_count} messages");
 
         // Convert the messages to JSON
         let json_messages: Vec<serde_json::Value> = messages
@@ -239,14 +238,14 @@ impl ImapSync {
                 }
 
                 // Log error but continue with other messages
-                eprintln!("Error saving message: {}", e);
+                eprintln!("Error saving message: {e}");
                 continue;
             }
 
             saved_count += 1;
         }
 
-        println!("Saved {} messages", saved_count);
+        println!("Saved {saved_count} messages");
 
         Ok((saved_count, has_more_messages))
     }
@@ -286,8 +285,7 @@ impl ImapSync {
                 .await
                 .with_context(|| {
                     format!(
-                        "Failed to sync messages from {} (index {})",
-                        mailbox, start_index
+                        "Failed to sync messages from {mailbox} (index {start_index})"
                     )
                 })?;
 
@@ -378,7 +376,7 @@ impl ImapSync {
     fn parse_message_date(message: &Message<'_>) -> Option<DateTime<Utc>> {
         message
             .date()
-            .map(|d| {
+            .and_then(|d| {
                 // Convert mail-parser::DateTime to chrono::DateTime
                 let year = d.year as i32;
                 let month = d.month as u32;
@@ -390,6 +388,5 @@ impl ImapSync {
                 Utc.with_ymd_and_hms(year, month, day, hour, minute, second)
                     .single()
             })
-            .flatten()
     }
 }

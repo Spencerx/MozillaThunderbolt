@@ -60,7 +60,7 @@ pub async fn init_libsql(
     encryption_key: Option<String>,
     pool_size: Option<usize>,
 ) -> Result<(), String> {
-    println!("🚀 ~ init_libsql: {:?}, {:?}", path, encryption_key);
+    println!("🚀 ~ init_libsql: {path:?}, {encryption_key:?}");
 
     // This is required - we need to clone/extract the data we need
     let pool_size = pool_size.unwrap_or(4);
@@ -68,7 +68,7 @@ pub async fn init_libsql(
     // Initialize the database and create the pool
     let db_pool = DbPool::new(&path, encryption_key, pool_size)
         .await
-        .map_err(|e| format!("Failed to build database pool: {}", e))?;
+        .map_err(|e| format!("Failed to build database pool: {e}"))?;
 
     // Store connection in state - do this directly, not in a spawned task
     let mut state_guard = state.inner().lock().await;
@@ -96,24 +96,24 @@ pub async fn execute(
     // Create a connection specifically for this operation
     let conn = database
         .connect()
-        .map_err(|e| format!("Failed to create connection: {}", e))?;
+        .map_err(|e| format!("Failed to create connection: {e}"))?;
 
     // Spawn a tokio task to handle the operation with the independently created connection
     tokio::spawn(async move {
         let mut stmt = conn
             .prepare(&query)
             .await
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+            .map_err(|e| format!("Failed to prepare statement: {e}"))?;
 
         // Create parameter values from JSON
         let params =
-            create_params(&values).map_err(|e| format!("Failed to create parameters: {}", e))?;
+            create_params(&values).map_err(|e| format!("Failed to create parameters: {e}"))?;
 
         // Pass params directly, not as reference
         let affected = stmt
             .execute(params)
             .await
-            .map_err(|e| format!("Failed to execute statement: {}", e))?;
+            .map_err(|e| format!("Failed to execute statement: {e}"))?;
 
         // libsql just returns the count as usize, no result object
         // We'll use 0 for last_insert_id (or implement another query to get it)
@@ -123,7 +123,7 @@ pub async fn execute(
         Ok((rows_affected, last_insert_id))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?
+    .map_err(|e| format!("Task error: {e}"))?
 }
 
 #[command]
@@ -144,30 +144,30 @@ pub async fn select(
     // Create a connection specifically for this operation
     let conn = database
         .connect()
-        .map_err(|e| format!("Failed to create connection: {}", e))?;
+        .map_err(|e| format!("Failed to create connection: {e}"))?;
 
     // Spawn a tokio task to handle the operation with the independently created connection
     tokio::spawn(async move {
         let mut stmt = conn
             .prepare(&query)
             .await
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+            .map_err(|e| format!("Failed to prepare statement: {e}"))?;
 
         // Create parameter values from JSON
         let params =
-            create_params(&values).map_err(|e| format!("Failed to create parameters: {}", e))?;
+            create_params(&values).map_err(|e| format!("Failed to create parameters: {e}"))?;
 
         // Pass params directly, not as reference
         let mut rows = stmt
             .query(params)
             .await
-            .map_err(|e| format!("Failed to execute query: {}", e))?;
+            .map_err(|e| format!("Failed to execute query: {e}"))?;
 
         let mut results = Vec::new();
         while let Some(row) = rows
             .next()
             .await
-            .map_err(|e| format!("Failed to fetch row: {}", e))?
+            .map_err(|e| format!("Failed to fetch row: {e}"))?
         {
             let mut row_values = Vec::with_capacity(row.column_count() as usize);
             for i in 0..(row.column_count() as usize) {
@@ -183,5 +183,5 @@ pub async fn select(
         Ok(results)
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?
+    .map_err(|e| format!("Task error: {e}"))?
 }

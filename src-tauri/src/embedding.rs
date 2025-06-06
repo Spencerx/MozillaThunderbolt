@@ -10,7 +10,7 @@ use crate::state::AppState;
 pub async fn init_embedder(state: State<'_, Mutex<AppState>>) -> Result<(), String> {
     // Initialize the embedder
     let embedder = thunderbolt_embeddings::embedding::Embedder::new()
-        .map_err(|e| format!("Failed to initialize embedder: {}", e))?;
+        .map_err(|e| format!("Failed to initialize embedder: {e}"))?;
 
     // Store the embedder in state wrapped in an Arc for thread safety
     let mut state_guard = state.lock().await;
@@ -42,10 +42,10 @@ pub async fn generate_embeddings(
     let embeddings = tokio::task::spawn_blocking(move || {
         // Use the Arc-wrapped embedder with the arc-specific function
         thunderbolt_embeddings::embedding::generate_embeddings_arc(&embedder_arc, &texts_clone)
-            .map_err(|e| format!("Failed to generate embeddings: {}", e))
+            .map_err(|e| format!("Failed to generate embeddings: {e}"))
     })
     .await
-    .map_err(|e| format!("Task failed: {}", e))?;
+    .map_err(|e| format!("Task failed: {e}"))?;
 
     embeddings
 }

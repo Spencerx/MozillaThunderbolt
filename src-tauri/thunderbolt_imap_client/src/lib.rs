@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+/// Type alias for the IMAP session type to reduce complexity
+type ImapSession = Arc<Mutex<Option<Session<Box<dyn ImapConnection>>>>>;
+
 /// Credentials for connecting to an IMAP server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImapCredentials {
@@ -17,7 +20,7 @@ pub struct ImapCredentials {
 }
 
 /// Options for configuring IMAP client behavior
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ImapOptions {
     pub debug: Option<bool>,
 }
@@ -52,17 +55,12 @@ pub struct FetchMessagesResponse {
     pub messages: Vec<EmailMessage>,
 }
 
-impl Default for ImapOptions {
-    fn default() -> Self {
-        ImapOptions { debug: None }
-    }
-}
 
 /// ImapClient provides an object-oriented interface to IMAP operations
 pub struct ImapClient {
     credentials: ImapCredentials,
     options: ImapOptions,
-    session: Arc<Mutex<Option<Session<Box<dyn ImapConnection>>>>>,
+    session: ImapSession,
 }
 
 impl ImapClient {
@@ -192,7 +190,7 @@ impl ImapClient {
             let end = std::cmp::min(start + requested_count - 1, total_messages);
 
             // Create the fetch range
-            let fetch_range = format!("{}:{}", start, end);
+            let fetch_range = format!("{start}:{end}");
 
             let message_set = session.fetch(&fetch_range, "RFC822")?;
 
@@ -231,7 +229,7 @@ impl ImapClient {
                 // Extract sent_at timestamp
                 let sent_at = parsed_message
                     .date()
-                    .map(|d| {
+                    .and_then(|d| {
                         // Convert mail-parser::DateTime to chrono::DateTime
                         let year = d.year as i32;
                         let month = d.month as u32;
@@ -244,7 +242,6 @@ impl ImapClient {
                             .single()
                             .map(|dt| dt.timestamp())
                     })
-                    .flatten()
                     .unwrap_or_else(|| Utc::now().timestamp());
 
                 // Extract from address
@@ -328,7 +325,7 @@ impl ImapClient {
         mailbox: &str,
         start_index: Option<usize>,
         count: Option<usize>,
-    ) -> Result<Vec<mail_parser::Message>> {
+    ) -> Result<Vec<mail_parser::Message<'_>>> {
         self.connect()?;
 
         let mut session_guard = self.session.lock().unwrap();
@@ -363,7 +360,7 @@ impl ImapClient {
             let end = std::cmp::min(start + requested_count - 1, total_messages);
 
             // Create the fetch range
-            let fetch_range = format!("{}:{}", start, end);
+            let fetch_range = format!("{start}:{end}");
 
             let messages = session.fetch(&fetch_range, "RFC822")?;
 
@@ -385,7 +382,7 @@ impl ImapClient {
     pub fn fetch_all_mailboxes(
         &self,
         count_per_mailbox: Option<usize>,
-    ) -> Result<Vec<mail_parser::Message>> {
+    ) -> Result<Vec<mail_parser::Message<'_>>> {
         self.connect()?;
 
         let mut session_guard = self.session.lock().unwrap();
@@ -413,13 +410,12 @@ impl ImapClient {
 
                                 // Create the fetch range
                                 let fetch_range = if actual_count == total_messages {
-                                    format!("1:{}", total_messages)
+                                    format!("1:{total_messages}")
                                 } else {
                                     // Get the most recent messages
                                     format!(
-                                        "{}:{}",
-                                        total_messages - actual_count + 1,
-                                        total_messages
+                                        "{}:{total_messages}",
+                                        total_messages - actual_count + 1
                                     )
                                 };
 
@@ -443,7 +439,7 @@ impl ImapClient {
                     }
                     Err(e) => {
                         // Log error but continue with other mailboxes
-                        eprintln!("Could not select mailbox {}: {}", mailbox_name, e);
+                        eprintln!("Could not select mailbox {mailbox_name}: {e}");
                     }
                 }
             }
@@ -454,7 +450,6 @@ impl ImapClient {
 }
 
 /// Utility functions for working with messages
-
 /// Removes URLs from a string
 pub fn remove_urls(input: &str) -> String {
     let url_regex = Regex::new(r"https?://[^\s]+|www\.[^\s]+").unwrap();
@@ -552,7 +547,7 @@ pub fn messages_to_json_values(
             Ok(json_value) => result.push(json_value),
             Err(err) => {
                 // Log the error but continue processing other messages
-                eprintln!("Error converting message to JSON: {}", err);
+                eprintln!("Error converting message to JSON: {err}");
                 // Add a null value as a placeholder for the failed message
                 result.push(serde_json::Value::Null);
             }
