@@ -186,18 +186,18 @@ export default function PreferencesSettingsPage() {
 
         await db
           .insert(settingsTable)
-          .values({ key: 'location_lat', value: values.locationLat })
+          .values({ key: 'location_lat', value: values.locationLat.toString() })
           .onConflictDoUpdate({
             target: settingsTable.key,
-            set: { value: values.locationLat },
+            set: { value: values.locationLat.toString() },
           })
 
         await db
           .insert(settingsTable)
-          .values({ key: 'location_lng', value: values.locationLng })
+          .values({ key: 'location_lng', value: values.locationLng.toString() })
           .onConflictDoUpdate({
             target: settingsTable.key,
-            set: { value: values.locationLng },
+            set: { value: values.locationLng.toString() },
           })
       } catch (error) {
         console.error('Error saving location settings:', error)
