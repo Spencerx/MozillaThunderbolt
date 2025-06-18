@@ -126,13 +126,13 @@ export default function ChatSidebar() {
               <DropdownMenu key={thread.id}>
                 <SidebarMenuItem>
                   <Link to={`/chats/${thread.id}`}>
-                    <SidebarMenuButton isActive={thread.id === currentChatThreadId} className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer">
-                      <div className="flex items-center gap-2 flex-1">
+                    <SidebarMenuButton isActive={thread.id === currentChatThreadId} className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
                         {thread.isEncrypted ? <Lock className="size-3.5 shrink-0" /> : null}
                         <span className="truncate">{thread.title}</span>
                       </div>
                       <DropdownMenuTrigger asChild>
-                        <MoreHorizontal className="ml-auto" />
+                        <MoreHorizontal className="shrink-0 size-4" />
                       </DropdownMenuTrigger>
                     </SidebarMenuButton>
                   </Link>
