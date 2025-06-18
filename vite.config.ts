@@ -24,6 +24,14 @@ export default defineConfig({
     {
       name: 'build-flower-intelligence',
       async buildStart() {
+        const publicFlowerFile = path.resolve(__dirname, 'public/flower/intelligence/ts/dist/flowerintelligence.bundled.es.js')
+        
+        // Skip if file already exists in public
+        if (fs.existsSync(publicFlowerFile)) {
+          console.log('✅ Flower Intelligence already exists in public directory, skipping build...')
+          return
+        }
+        
         console.log('🌸 Building Flower Intelligence...')
         
         // Run the build script
@@ -39,7 +47,7 @@ export default defineConfig({
         if (fs.existsSync(flowerDistFile)) {
           fs.copyFileSync(
             flowerDistFile,
-            path.resolve(publicFlowerDir, 'flowerintelligence.bundled.es.js')
+            publicFlowerFile
           )
           console.log('✅ Flower Intelligence built and copied to public directory')
         } else {

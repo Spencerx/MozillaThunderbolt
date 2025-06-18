@@ -76,7 +76,7 @@ export const seedModels = async (db: AnyDrizzleDatabase) => {
         model: 'mistralai/mistral-small-3.1-24b',
         isSystem: 0,
         enabled: 1,
-        toolUsage: 0, // Disabled due to inconsistent tool calling with Mistral models
+        toolUsage: 1,
         isConfidential: 1,
       },
     ]
