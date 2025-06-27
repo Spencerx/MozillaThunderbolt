@@ -14,12 +14,12 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { getOrCreateChatThread } from '@/dal'
 import { chatThreadsTable } from '@/db/tables'
 import { useDatabase } from '@/hooks/use-database'
+import { getOrCreateChatThread } from '@/lib/dal'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { desc, eq } from 'drizzle-orm'
-import { Flame, Loader2, Lock, MoreHorizontal, Settings, SquarePen } from 'lucide-react'
+import { CheckSquare, Flame, Loader2, Lock, MoreHorizontal, Settings, SquarePen } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 export default function ChatSidebar() {
@@ -89,6 +89,14 @@ export default function ChatSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
+                  <Link to="/tasks">
+                    <CheckSquare className="size-4" />
+                    <span>Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
                   <Link to="/settings/preferences">
                     <Settings className="size-4" />
                     <span>Settings</span>
@@ -112,7 +120,11 @@ export default function ChatSidebar() {
                     className="w-fit pr-0 pl-0 aspect-square items-center justify-center cursor-pointer"
                     disabled={deleteAllChatsMutation.isPending}
                   >
-                    {deleteAllChatsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Flame className="size-4" />}
+                    {deleteAllChatsMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Flame className="size-4" />
+                    )}
                   </SidebarMenuButton>
                 </TooltipTrigger>
                 <TooltipContent side="right">
@@ -126,7 +138,10 @@ export default function ChatSidebar() {
               <DropdownMenu key={thread.id}>
                 <SidebarMenuItem>
                   <Link to={`/chats/${thread.id}`}>
-                    <SidebarMenuButton isActive={thread.id === currentChatThreadId} className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer flex items-center gap-2">
+                    <SidebarMenuButton
+                      isActive={thread.id === currentChatThreadId}
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer flex items-center gap-2"
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         {thread.isEncrypted ? <Lock className="size-3.5 shrink-0" /> : null}
                         <span className="truncate">{thread.title}</span>

@@ -10,7 +10,7 @@ import {
   embeddingsTable,
   modelsTable,
   settingsTable,
-  todosTable,
+  tasksTable,
 } from './tables'
 
 export const chatThreadsRelations = relations(chatThreadsTable, ({ many }) => ({
@@ -57,7 +57,7 @@ export const emailThreadsRelations = relations(emailThreadsTable, ({ many, one }
     fields: [emailThreadsTable.id],
     references: [embeddingsTable.emailThreadId],
   }),
-  todos: many(todosTable),
+  tasks: many(tasksTable),
 }))
 
 export const contactsRelations = relations(contactsTable, ({ many }) => ({
@@ -84,7 +84,7 @@ export const emailMessagesToAddressesRelations = relations(emailMessagesToAddres
   }),
 }))
 
-export const todosRelations = relations(todosTable, ({ many }) => ({
+export const tasksRelations = relations(tasksTable, ({ many }) => ({
   emailThreads: many(emailThreadsTable),
 }))
 

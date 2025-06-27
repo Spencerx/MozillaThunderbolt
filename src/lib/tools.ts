@@ -1,7 +1,7 @@
-import { getSetting } from '@/dal'
 import * as tasksTools from '@/extensions/tasks/tools'
 import { configs as googleConfigs } from '@/integrations/google/tools'
 import { configs as microsoftConfigs } from '@/integrations/microsoft/tools'
+import { getSetting } from '@/lib/dal'
 import type { ToolConfig } from '@/types'
 import { tool, type Tool } from 'ai'
 

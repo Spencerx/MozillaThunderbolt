@@ -1,6 +1,6 @@
 // New file with Microsoft Graph tools
 
-import { getSetting, updateSetting } from '@/dal'
+import { getSetting, updateSetting } from '@/lib/dal'
 import type { ToolConfig } from '@/types'
 import ky from 'ky'
 import { z } from 'zod'

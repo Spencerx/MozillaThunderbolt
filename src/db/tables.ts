@@ -84,12 +84,14 @@ export const emailMessagesTable = sqliteTable('email_messages', {
   references: text('references', { mode: 'json' }).$type<string[]>(),
 })
 
-export const todosTable = sqliteTable('todos', {
+export const tasksTable = sqliteTable('tasks', {
   id: text('id').primaryKey().notNull().unique(),
   item: text('item').notNull(),
   emailMessageId: text('email_message_id')
     .unique()
     .references(() => emailMessagesTable.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+  order: integer('order').notNull().default(0),
+  isComplete: integer('is_complete').notNull().default(0),
 })
 
 export const modelsTable = sqliteTable('models', {

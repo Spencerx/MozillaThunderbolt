@@ -6,6 +6,8 @@ import ChatLayout from '@/chats/layout2'
 import OAuthCallback from '@/components/oauth-callback'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { useMcpSync } from '@/hooks/use-mcp-sync'
+import { getOrCreateChatThread } from '@/lib/dal'
+import { seedAccounts, seedMcpServers, seedModels, seedSettings, seedTasks } from '@/lib/seed'
 import { ThemeProvider } from '@/lib/theme-provider'
 import AccountsSettingsPage from '@/settings/accounts'
 import DevSettingsPage from '@/settings/dev-settings'
@@ -15,8 +17,8 @@ import McpServersPage from '@/settings/mcp-servers'
 import ModelsPage from '@/settings/models'
 import PreferencesSettingsPage from '@/settings/preferences'
 import ThunderboltBridgeSettingsPage from '@/settings/thunderbolt-bridge'
+import TasksPage from '@/tasks'
 import { useEffect, useState } from 'react'
-import { getOrCreateChatThread, seedAccounts, seedMcpServers, seedModels, seedSettings } from './dal'
 import { migrate } from './db/migrate'
 import { DatabaseSingleton } from './db/singleton'
 import { accountsTable } from './db/tables'
@@ -48,6 +50,7 @@ function AppContent({ initData }: { initData: InitData }) {
           <Route element={<ChatLayout />}>
             <Route index element={<Navigate to={`/chats/${initData.initialThreadId}`} replace />} />
             <Route path="chats/:chatThreadId" element={<ChatDetailPage />} />
+            <Route path="tasks" element={<TasksPage />} />
           </Route>
 
           {/* Settings routes with SettingsLayout */}
@@ -65,7 +68,7 @@ function AppContent({ initData }: { initData: InitData }) {
           <Route path="ui-kit" element={<UiKitPage />} />
           <Route path="devtools" element={<DevToolsPage />} />
         </Route>
-        
+
         {/* OAuth callback route */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
       </Routes>
@@ -89,6 +92,7 @@ const init = async (): Promise<InitData> => {
   await seedModels()
   await seedSettings()
   await seedMcpServers()
+  await seedTasks()
 
   const imap = new ImapClient()
   const imapSync = new ImapSyncClient()

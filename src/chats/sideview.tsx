@@ -1,4 +1,8 @@
-import { getEmailThreadByIdWithMessages, getEmailThreadByMessageIdWithMessages, getEmailThreadByMessageImapIdWithMessages } from '@/dal'
+import {
+  getEmailThreadByIdWithMessages,
+  getEmailThreadByMessageIdWithMessages,
+  getEmailThreadByMessageImapIdWithMessages,
+} from '@/lib/dal'
 import { useSideview } from '@/sideview/provider'
 import { EmailThreadView } from '@/sideview/thread'
 import { useQuery } from '@tanstack/react-query'

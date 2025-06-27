@@ -1,5 +1,5 @@
 import { AnyDrizzleDatabase } from '@/db/database-interface'
-import { emailMessagesTable, modelsTable, todosTable } from '@/db/schema'
+import { emailMessagesTable, modelsTable, tasksTable } from '@/db/schema'
 import { ImapSyncer } from '@/imap/sync'
 import { generateObject } from 'ai'
 import { eq, isNotNull } from 'drizzle-orm'
@@ -12,8 +12,8 @@ export type RefreshTasksParams = {
 }
 
 export const refreshTasks = async ({ db }: RefreshTasksParams) => {
-  // Delete existing todos with email_thread_id
-  await db.delete(todosTable).where(isNotNull(todosTable.emailMessageId))
+  // Delete existing tasks with email_thread_id
+  await db.delete(tasksTable).where(isNotNull(tasksTable.emailMessageId))
 
   // Fetch emails from inbox
   // const { messages } = await imapClient.fetchMessages('INBOX', 1, 10)
@@ -56,10 +56,12 @@ export const refreshTasks = async ({ db }: RefreshTasksParams) => {
   })
 
   for (const task of result.object) {
-    await db.insert(todosTable).values({
+    await db.insert(tasksTable).values({
       id: uuidv7(),
       item: task.item,
       emailMessageId: task.emailMessageId,
+      order: 0,
+      isComplete: 0,
     })
   }
 }

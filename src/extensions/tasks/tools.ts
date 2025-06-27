@@ -1,5 +1,5 @@
 import { DatabaseSingleton } from '@/db/singleton'
-import { todosTable } from '@/db/tables'
+import { tasksTable } from '@/db/tables'
 import { inArray } from 'drizzle-orm'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
@@ -14,11 +14,13 @@ export const addTasks = {
   execute: async (params: { tasks: string[] }) => {
     const db = DatabaseSingleton.instance.db
     const tasks = await db
-      .insert(todosTable)
+      .insert(tasksTable)
       .values(
         params.tasks.map((task: string) => ({
           id: uuidv7(),
           item: task,
+          order: 0,
+          isComplete: 0,
         }))
       )
       .returning()
@@ -33,7 +35,7 @@ export const getTasks = {
   parameters: z.object({}),
   execute: async () => {
     const db = DatabaseSingleton.instance.db
-    const tasks = await db.select().from(todosTable)
+    const tasks = await db.select().from(tasksTable)
     return tasks
   },
 }
@@ -47,7 +49,7 @@ export const deleteTasks = {
   }),
   execute: async (params: { taskIds: string[] }) => {
     const db = DatabaseSingleton.instance.db
-    await db.delete(todosTable).where(inArray(todosTable.id, params.taskIds))
+    await db.delete(tasksTable).where(inArray(tasksTable.id, params.taskIds))
     return {
       success: true,
     }

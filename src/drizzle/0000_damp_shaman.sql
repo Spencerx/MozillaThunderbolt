@@ -124,12 +124,14 @@ CREATE TABLE `settings` (
 	`updated_at` integer DEFAULT (unixepoch())
 );
 --> statement-breakpoint
-CREATE TABLE `todos` (
+CREATE TABLE `tasks` (
 	`id` text PRIMARY KEY NOT NULL,
 	`item` text NOT NULL,
 	`email_message_id` text,
+	`order` integer DEFAULT 0 NOT NULL,
+	`is_complete` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`email_message_id`) REFERENCES `email_messages`(`id`) ON UPDATE cascade ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `todos_id_unique` ON `todos` (`id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `todos_email_message_id_unique` ON `todos` (`email_message_id`);
+CREATE UNIQUE INDEX `tasks_id_unique` ON `tasks` (`id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `tasks_email_message_id_unique` ON `tasks` (`email_message_id`);

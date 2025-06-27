@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8fe66863-a203-4904-9727-fa77e2b75520",
+  "id": "13426dab-7514-4cf0-a20c-12d466c29b67",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "accounts": {
@@ -827,8 +827,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "todos": {
-      "name": "todos",
+    "tasks": {
+      "name": "tasks",
       "columns": {
         "id": {
           "name": "id",
@@ -850,18 +850,34 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "is_complete": {
+          "name": "is_complete",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {
-        "todos_id_unique": {
-          "name": "todos_id_unique",
+        "tasks_id_unique": {
+          "name": "tasks_id_unique",
           "columns": [
             "id"
           ],
           "isUnique": true
         },
-        "todos_email_message_id_unique": {
-          "name": "todos_email_message_id_unique",
+        "tasks_email_message_id_unique": {
+          "name": "tasks_email_message_id_unique",
           "columns": [
             "email_message_id"
           ],
@@ -869,9 +885,9 @@
         }
       },
       "foreignKeys": {
-        "todos_email_message_id_email_messages_id_fk": {
-          "name": "todos_email_message_id_email_messages_id_fk",
-          "tableFrom": "todos",
+        "tasks_email_message_id_email_messages_id_fk": {
+          "name": "tasks_email_message_id_email_messages_id_fk",
+          "tableFrom": "tasks",
           "tableTo": "email_messages",
           "columnsFrom": [
             "email_message_id"

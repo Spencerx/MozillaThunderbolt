@@ -15,7 +15,7 @@ import {
   mcpServersTable,
   modelsTable,
   settingsTable,
-  todosTable,
+  tasksTable,
 } from './db/tables'
 import ImapClient from './imap/imap'
 import { ImapSyncClient } from './sync'
@@ -49,7 +49,7 @@ export type ModelsSettings = {
 export type Settings = {
   account?: AccountsSettings
   models?: ModelsSettings
-  last_generated_todos_from_inbox?: string
+  last_generated_tasks_from_inbox?: string
 }
 
 export type ChatMessage = InferSelectModel<typeof chatMessagesTable>
@@ -61,7 +61,7 @@ export type EmailAddress = InferSelectModel<typeof emailAddressesTable>
 export type EmailMessageToAddress = InferSelectModel<typeof emailMessagesToAddressesTable>
 export type Embedding = InferSelectModel<typeof embeddingsTable>
 export type Model = InferSelectModel<typeof modelsTable>
-export type Todo = InferSelectModel<typeof todosTable>
+export type Task = InferSelectModel<typeof tasksTable>
 export type Contact = InferSelectModel<typeof contactsTable>
 export type McpServer = InferSelectModel<typeof mcpServersTable>
 

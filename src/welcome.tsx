@@ -4,7 +4,7 @@ import { Button } from './components/ui/button'
 import { Skeleton } from './components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip'
 import { useDatabase } from '@/hooks/use-database'
-import { todosTable } from './db/tables'
+import { tasksTable } from './db/tables'
 import { useImap } from './imap/provider'
 import { refreshTasks } from './lib/tasks'
 import { useSetting } from './settings/hooks'
@@ -15,12 +15,12 @@ export default function WelcomePage() {
   const { db } = useDatabase()
   const { setSideview } = useSideview()
   const [_inboxSummary, setInboxSummary] = useState<string | null>(null)
-  const [toDoList, setToDoList] = useState<{ item: string; emailMessageId?: string | null }[]>([])
+  const [tasksList, setTasksList] = useState<{ item: string; emailMessageId?: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [showAllTodos, setShowAllTodos] = useState(false)
+  const [showAllTasks, setShowAllTasks] = useState(false)
 
-  const { value: lastGeneratedTodos, setValue: setLastGeneratedTodos, isLoading: isLoadingLastGeneratedTodos } = useSetting<number>('last_generated_todos_from_inbox')
+  const { value: lastGeneratedTasks, setValue: setLastGeneratedTasks, isLoading: isLoadingLastGeneratedTasks } = useSetting<number>('last_generated_tasks_from_inbox')
   const { value: preferredName } = useSetting<string>('preferred_name')
 
   const hours = new Date().getHours()
@@ -31,31 +31,31 @@ export default function WelcomePage() {
     try {
       setIsRefreshing(true)
       setLoading(true)
-      setToDoList([]) // Clear existing todos while loading
+      setTasksList([]) // Clear existing tasks while loading
 
-      // Check if we need to regenerate todos
+      // Check if we need to regenerate tasks
       const now = new Date().getTime()
       const oneHourInMs = 60 * 60 * 1000
 
-      // If lastGeneratedTodos is more than 1 hour old or doesn't exist, or if forceRefresh is true, regenerate todos
-      if (forceRefresh || !lastGeneratedTodos || now - lastGeneratedTodos > oneHourInMs) {
-        console.log('Regenerating todos')
+      // If lastGeneratedTasks is more than 1 hour old or doesn't exist, or if forceRefresh is true, regenerate tasks
+      if (forceRefresh || !lastGeneratedTasks || now - lastGeneratedTasks > oneHourInMs) {
+        console.log('Regenerating tasks')
 
         if (imapClient.isInitialized) {
           await refreshTasks({ db })
         }
 
-        // Save the timestamp of when we generated the todos
+        // Save the timestamp of when we generated the tasks
         // await settingsContext.setSettings({
         //   ...settingsContext.settings,
-        //   last_generated_todos_from_inbox: now.toString(),
+        //   last_generated_tasks_from_inbox: now.toString(),
         // })
 
-        await setLastGeneratedTodos(now)
+        await setLastGeneratedTasks(now)
       }
 
-      const todos = await db.select().from(todosTable).orderBy(todosTable.id)
-      setToDoList(todos.map((todo) => ({ item: todo.item, emailMessageId: todo.emailMessageId })))
+      const tasks = await db.select().from(tasksTable).orderBy(tasksTable.id)
+      setTasksList(tasks.map((task) => ({ item: task.item, emailMessageId: task.emailMessageId })))
       setLoading(false)
       setIsRefreshing(false)
     } catch (error) {
@@ -67,14 +67,14 @@ export default function WelcomePage() {
   }
 
   useEffect(() => {
-    if (!isLoadingLastGeneratedTodos) {
+    if (!isLoadingLastGeneratedTasks) {
       refresh()
     }
-  }, [isLoadingLastGeneratedTodos])
+  }, [isLoadingLastGeneratedTasks])
 
-  const displayedTodos = showAllTodos ? toDoList : toDoList.slice(0, 3)
+  const displayedTasks = showAllTasks ? tasksList : tasksList.slice(0, 3)
 
-  if (isLoadingLastGeneratedTodos) {
+  if (isLoadingLastGeneratedTasks) {
     return <div>Loading...</div>
   }
 
@@ -84,7 +84,7 @@ export default function WelcomePage() {
         <h1 className="text-4xl font-bold tracking-tight mb-2 text-primary">{preferredName ? `Good ${timeOfDay}, ${preferredName}` : `Good ${timeOfDay}`}</h1>
         <p className="text-muted-foreground text-lg">{date}</p>
 
-        {/* To-Do List Section */}
+        {/* Tasks List Section */}
         <div className="mt-6 bg-card rounded-lg shadow-sm p-6 border border-border hover:border-primary/20 transition-all hover:shadow-md">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -123,27 +123,27 @@ export default function WelcomePage() {
               </>
             ) : (
               <div className="space-y-1">
-                {displayedTodos.length > 0 ? (
+                {displayedTasks.length > 0 ? (
                   <>
-                    {displayedTodos.map((todo, index) => (
+                    {displayedTasks.map((task, index) => (
                       <div
                         key={index}
                         className="p-4 bg-secondary/10 hover:bg-secondary/80 rounded-lg flex items-start gap-3 cursor-pointer transition-colors group"
-                        onClick={() => todo.emailMessageId && setSideview('message', todo.emailMessageId)}
+                        onClick={() => task.emailMessageId && setSideview('message', task.emailMessageId)}
                       >
                         <Square className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 group-hover:text-primary/80 transition-colors" />
                         <div className="flex-1">
-                          <span className="text-sm font-medium">{todo.item}</span>
+                          <span className="text-sm font-medium">{task.item}</span>
                         </div>
                       </div>
                     ))}
-                    {toDoList.length > 3 && !showAllTodos && (
-                      <Button variant="ghost" className="w-full mt-4 flex items-center justify-center gap-2" onClick={() => setShowAllTodos(true)}>
+                    {tasksList.length > 3 && !showAllTasks && (
+                      <Button variant="ghost" className="w-full mt-4 flex items-center justify-center gap-2" onClick={() => setShowAllTasks(true)}>
                         Show More <ChevronDown className="h-4 w-4" />
                       </Button>
                     )}
-                    {showAllTodos && (
-                      <Button variant="ghost" className="w-full mt-4 flex items-center justify-center gap-2" onClick={() => setShowAllTodos(false)}>
+                    {showAllTasks && (
+                      <Button variant="ghost" className="w-full mt-4 flex items-center justify-center gap-2" onClick={() => setShowAllTasks(false)}>
                         Show Less <ChevronDown className="h-4 w-4 rotate-180" />
                       </Button>
                     )}
