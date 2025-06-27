@@ -8,17 +8,21 @@ import { z } from 'zod'
 /**
  * Schemas
  */
-export const listMessagesSchema = z.object({
-  top: z.number().optional().describe('Maximum number of messages to return (1-1000)'),
-  skipToken: z.string().optional().describe('Skip token for paging (opaque string returned from previous response)'),
-  filter: z.string().optional().describe('OData $filter expression'),
-  includeBodyHtml: z.boolean().optional().describe('Whether to include the HTML body in each message'),
-})
+export const listMessagesSchema = z
+  .object({
+    top: z.number().describe('Maximum number of messages to return (1-1000)'),
+    skipToken: z.string().describe('Skip token for paging (opaque string returned from previous response)'),
+    filter: z.string().describe('OData $filter expression'),
+    includeBodyHtml: z.boolean().describe('Whether to include the HTML body in each message'),
+  })
+  .strict()
 
-export const getMessageSchema = z.object({
-  id: z.string().describe('The ID of the message to retrieve'),
-  includeBodyHtml: z.boolean().optional().describe('Whether to include the HTML body in the message'),
-})
+export const getMessageSchema = z
+  .object({
+    id: z.string().describe('The ID of the message to retrieve'),
+    includeBodyHtml: z.boolean().describe('Whether to include the HTML body in the message'),
+  })
+  .strict()
 
 export type ListMessagesParams = z.infer<typeof listMessagesSchema>
 export type GetMessageParams = z.infer<typeof getMessageSchema>

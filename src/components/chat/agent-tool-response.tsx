@@ -1,7 +1,7 @@
-import { getToolMetadataSync } from '@/lib/tool-metadata'
+import { getToolMetadata } from '@/lib/tool-metadata'
 import type { ToolInvocationUIPart } from 'ai'
 import { Check, ChevronDown, ChevronRight, Loader2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ChatMessagePreview } from './message-preview'
 
 export type AgentToolResponseProps = {
@@ -36,20 +36,9 @@ function getStatusColor(status: 'running' | 'complete' | 'error') {
 }
 
 export const AgentToolResponse = ({ part }: AgentToolResponseProps) => {
-  // Get initial metadata synchronously (fallback)
-  const [metadata, setMetadata] = useState(() => getToolMetadataSync(part.toolInvocation.toolName, part.toolInvocation.args))
+  // Get metadata using function-based approach (synchronous)
+  const metadata = getToolMetadata(part.toolInvocation.toolName, part.toolInvocation.args)
   const [isCollapsed, setIsCollapsed] = useState(true)
-
-  // Update metadata when LLM generation completes
-  useEffect(() => {
-    import('@/lib/tool-metadata').then(({ getToolMetadata }) => {
-      getToolMetadata(part.toolInvocation.toolName, part.toolInvocation.args)
-        .then(setMetadata)
-        .catch(() => {
-          // Keep fallback metadata if LLM fails
-        })
-    })
-  }, [part.toolInvocation.toolName, part.toolInvocation.args])
 
   // Determine status based on the tool invocation state
   const toolInvocation = part.toolInvocation
@@ -93,7 +82,9 @@ export const AgentToolResponse = ({ part }: AgentToolResponseProps) => {
       // Handle other object results
       return (
         <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-950/30 border border-gray-200 rounded-md">
-          <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{JSON.stringify(results, null, 2)}</pre>
+          <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            {JSON.stringify(results, null, 2)}
+          </pre>
         </div>
       )
     }
@@ -124,8 +115,13 @@ export const AgentToolResponse = ({ part }: AgentToolResponseProps) => {
   const resultData = getResultData()
 
   return (
-    <div className={`tool-invocation-card border rounded-lg overflow-hidden transition-colors ${getStatusColor(status)}`}>
-      <div className="tool-header p-3 flex justify-between items-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onClick={() => setIsCollapsed(!isCollapsed)}>
+    <div
+      className={`tool-invocation-card border rounded-lg overflow-hidden transition-colors ${getStatusColor(status)}`}
+    >
+      <div
+        className="tool-header p-3 flex justify-between items-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
         <div className="tool-info flex items-center gap-3 min-w-0 flex-1">
           <div className="flex items-center gap-2">
             {getToolIcon(status)}
@@ -134,10 +130,16 @@ export const AgentToolResponse = ({ part }: AgentToolResponseProps) => {
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{metadata.displayName}</span>
+              <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                {metadata.displayName}
+              </span>
             </div>
 
-            {status === 'running' && <div className="text-xs text-blue-600 dark:text-blue-400 italic animate-pulse">{metadata.loadingMessage}</div>}
+            {status === 'running' && (
+              <div className="text-xs text-blue-600 dark:text-blue-400 italic animate-pulse">
+                {metadata.loadingMessage}
+              </div>
+            )}
           </div>
         </div>
 
@@ -150,13 +152,19 @@ export const AgentToolResponse = ({ part }: AgentToolResponseProps) => {
                 setIsCollapsed(!isCollapsed)
               }}
             >
-              {isCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
             </button>
           )}
         </div>
       </div>
 
-      {!isCollapsed && resultData && <div className="tool-result border-t border-current/10">{renderResults(resultData)}</div>}
+      {!isCollapsed && resultData && (
+        <div className="tool-result border-t border-current/10">{renderResults(resultData)}</div>
+      )}
     </div>
   )
 }

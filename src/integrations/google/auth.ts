@@ -18,7 +18,18 @@ export const getOAuthConfig = async (): Promise<OAuthConfig> => {
     redirectUri: isTauri()
       ? window.location.origin + '/oauth-callback.html'
       : window.location.origin + '/oauth/callback',
-    scope: 'https://www.googleapis.com/auth/gmail.readonly email profile openid',
+    scope: [
+      'email',
+      'profile',
+      'openid',
+      // Gmail scopes
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/gmail.modify',
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/gmail.labels',
+      'https://www.googleapis.com/auth/gmail.settings.basic',
+      'https://www.googleapis.com/auth/gmail.settings.sharing',
+    ].join(' '),
   }
 }
 

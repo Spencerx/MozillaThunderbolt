@@ -1,30 +1,48 @@
-import { getSetting } from '@/dal'
 import type { ToolConfig } from '@/types'
 import ky from 'ky'
 import { z } from 'zod'
+import { draftToolConfigs } from './drafts'
+import { labelToolConfigs } from './labels'
+import { messageToolConfigs } from './messages'
+import { settingToolConfigs } from './settings'
+import { ensureValidGoogleToken, getGoogleCredentials } from './utils'
+import { watchToolConfigs } from './watch'
 
 /**
  * Schemas
  */
-export const listThreadsSchema = z.object({
-  maxResults: z.number().optional().describe('Maximum number of threads to return'),
-  pageToken: z.string().optional().describe('Page token to retrieve a specific page of results'),
-  q: z.string().optional().describe('Only return threads matching the specified query'),
-  labelIds: z
-    .array(z.string())
-    .optional()
-    .describe('Only return threads with labels that match all of the specified label IDs'),
-  includeSpamTrash: z.boolean().optional().describe('Include threads from SPAM and TRASH in the results'),
-  includeBodyHtml: z.boolean().optional().describe('Whether to include the parsed HTML in the return for each body'),
-})
+export const listThreadsSchema = z
+  .object({
+    maxResults: z.number().describe('Maximum number of threads to return'),
+    pageToken: z.string().describe('Page token to retrieve a specific page of results'),
+    q: z.string().describe('Only return threads matching the specified query'),
+    labelIds: z.array(z.string()).describe('Only return threads with labels that match all of the specified label IDs'),
+    includeSpamTrash: z.boolean().describe('Include threads from SPAM and TRASH in the results'),
+    includeBodyHtml: z.boolean().describe('Whether to include the parsed HTML in the return for each body'),
+  })
+  .strict()
 
-export const getThreadSchema = z.object({
-  id: z.string().describe('The ID of the thread to retrieve'),
-  includeBodyHtml: z.boolean().optional().describe('Whether to include the parsed HTML in the return for each body'),
-})
+export const getThreadSchema = z
+  .object({
+    id: z.string().describe('The ID of the thread to retrieve'),
+    includeBodyHtml: z.boolean().describe('Whether to include the parsed HTML in the return for each body'),
+  })
+  .strict()
+
+export const modifyThreadSchema = z
+  .object({
+    id: z.string().describe('Thread ID'),
+    addLabelIds: z.array(z.string()),
+    removeLabelIds: z.array(z.string()),
+  })
+  .strict()
+
+export const simpleThreadIdSchema = z.object({ id: z.string().describe('Thread ID') }).strict()
 
 export type ListThreadsParams = z.infer<typeof listThreadsSchema>
 export type GetThreadParams = z.infer<typeof getThreadSchema>
+export type ModifyThreadParams = z.infer<typeof modifyThreadSchema>
+export type SimpleThreadIdParams = z.infer<typeof simpleThreadIdSchema>
 
 // ---------------------------------------------------------------------------
 // Google Mail API minimal types
@@ -61,52 +79,22 @@ export type GoogleThreadResponse = {
 }
 
 /**
- * Internal helpers
- */
-const getGoogleCredentials = async () => {
-  const credentialsStr = await getSetting('integrations_google_credentials')
-  if (!credentialsStr) throw new Error('Google integration not connected')
-
-  try {
-    return JSON.parse(credentialsStr)
-  } catch {
-    throw new Error('Invalid Google credentials')
-  }
-}
-
-/** Refresh access token if needed */
-const ensureValidToken = async (credentials: { access_token: string; refresh_token: string; expires_at?: number }) => {
-  const now = Date.now()
-  if (credentials.expires_at && credentials.expires_at < now) {
-    if (!credentials.refresh_token) throw new Error('Access token expired and no refresh token available')
-
-    const { refreshAccessToken } = await import('@/lib/auth')
-    const newTokens = await refreshAccessToken('google', credentials.refresh_token)
-    const updated = {
-      ...credentials,
-      access_token: newTokens.access_token,
-      expires_at: Date.now() + newTokens.expires_in * 1000,
-    }
-
-    const { updateSetting } = await import('@/dal')
-    await updateSetting('integrations_google_credentials', JSON.stringify(updated))
-
-    return newTokens.access_token
-  }
-
-  return credentials.access_token
-}
-
-/**
  * Public API
  */
 export const listThreads = async (params: ListThreadsParams) => {
   const credentials = await getGoogleCredentials()
-  const accessToken = await ensureValidToken(credentials)
+  const accessToken = await ensureValidGoogleToken(credentials)
 
   const searchParams = new URLSearchParams()
   if (params.maxResults) searchParams.set('maxResults', params.maxResults.toString())
-  if (params.pageToken) searchParams.set('pageToken', params.pageToken)
+  if (
+    params.pageToken &&
+    params.pageToken.trim() !== '' &&
+    params.pageToken !== 'None' &&
+    params.pageToken !== 'null'
+  ) {
+    searchParams.set('pageToken', params.pageToken)
+  }
   if (params.q) searchParams.set('q', params.q)
   if (params.labelIds?.length) params.labelIds.forEach((id) => searchParams.append('labelIds', id))
   if (params.includeSpamTrash !== undefined) searchParams.set('includeSpamTrash', String(params.includeSpamTrash))
@@ -130,7 +118,7 @@ export const listThreads = async (params: ListThreadsParams) => {
 
 export const getThread = async (params: GetThreadParams) => {
   const credentials = await getGoogleCredentials()
-  const accessToken = await ensureValidToken(credentials)
+  const accessToken = await ensureValidGoogleToken(credentials)
 
   const response = await ky
     .get(`https://www.googleapis.com/gmail/v1/users/me/threads/${params.id}`, {
@@ -171,7 +159,53 @@ const extractBody = (
   return null
 }
 
-export const configs: ToolConfig[] = [
+// ----------------- Thread mutations -----------------
+
+export const modifyThread = async (params: ModifyThreadParams) => {
+  const credentials = await getGoogleCredentials()
+  const accessToken = await ensureValidGoogleToken(credentials)
+
+  return await ky
+    .post(`https://www.googleapis.com/gmail/v1/users/me/threads/${params.id}/modify`, {
+      json: {
+        addLabelIds: params.addLabelIds,
+        removeLabelIds: params.removeLabelIds,
+      },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    .json<GoogleThreadResponse>()
+}
+
+export const deleteThread = async (params: SimpleThreadIdParams) => {
+  const credentials = await getGoogleCredentials()
+  const accessToken = await ensureValidGoogleToken(credentials)
+  await ky.delete(`https://www.googleapis.com/gmail/v1/users/me/threads/${params.id}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  return { status: 'deleted' }
+}
+
+export const trashThread = async (params: SimpleThreadIdParams) => {
+  const credentials = await getGoogleCredentials()
+  const accessToken = await ensureValidGoogleToken(credentials)
+  return await ky
+    .post(`https://www.googleapis.com/gmail/v1/users/me/threads/${params.id}/trash`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    .json<GoogleThreadResponse>()
+}
+
+export const untrashThread = async (params: SimpleThreadIdParams) => {
+  const credentials = await getGoogleCredentials()
+  const accessToken = await ensureValidGoogleToken(credentials)
+  return await ky
+    .post(`https://www.googleapis.com/gmail/v1/users/me/threads/${params.id}/untrash`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    .json<GoogleThreadResponse>()
+}
+
+export const threadToolConfigs: ToolConfig[] = [
   {
     name: 'google_list_threads',
     description: 'List Google threads with optional filtering',
@@ -186,4 +220,42 @@ export const configs: ToolConfig[] = [
     parameters: getThreadSchema,
     execute: getThread,
   },
+  {
+    name: 'google_modify_thread',
+    description: 'Add or remove labels on a Gmail thread',
+    verb: 'Modifying Gmail thread',
+    parameters: modifyThreadSchema,
+    execute: modifyThread,
+  },
+  {
+    name: 'google_delete_thread',
+    description: 'Permanently delete a Gmail thread',
+    verb: 'Deleting Gmail thread',
+    parameters: simpleThreadIdSchema,
+    execute: deleteThread,
+  },
+  {
+    name: 'google_trash_thread',
+    description: 'Move a Gmail thread to Trash',
+    verb: 'Trashing Gmail thread',
+    parameters: simpleThreadIdSchema,
+    execute: trashThread,
+  },
+  {
+    name: 'google_untrash_thread',
+    description: 'Move a Gmail thread out of Trash',
+    verb: 'Untrashing Gmail thread',
+    parameters: simpleThreadIdSchema,
+    execute: untrashThread,
+  },
+]
+
+// Combine with message tools
+export const configs: ToolConfig[] = [
+  ...threadToolConfigs,
+  ...messageToolConfigs,
+  ...labelToolConfigs,
+  ...draftToolConfigs,
+  ...settingToolConfigs,
+  ...watchToolConfigs,
 ]

@@ -61,6 +61,7 @@ const createPrompt = ({ preferredName, location }: PromptParams) => {
     `Before sending your final reply, silently ask yourself:`,
     `"Did I *successfully* call a tool to obtain every live fact I'm about to state?"`,
     `If the answer is "no", refuse as instructed above.`,
+    `Is the message that I'm about to send to the user actually useful for a human or do I need to call more tools to make it useful?`,
 
     // —— Style guide ——
     `Respond in Markdown that is pleasant, concise, and helpful. Use subheaders, bullet points, and bold / italics to help structure the response. Use emojis where appropriate.`,
@@ -264,27 +265,8 @@ export const aiFetchStreamingResponse = async ({
       messages: convertToModelMessages(messages),
       toolCallStreaming: supportsTools,
       tools: supportsTools ? toolset : undefined,
-      // continueUntil: hasToolCall('answer'),
-      // continueUntil: maxSteps(5),
+
       maxSteps: 10,
-      providerOptions:
-        // OpenAI’s *Structured Outputs* mode rejects any tool schema that
-        // contains properties not listed in `required` (i.e. “optional” fields).
-        // Many MCP servers rely on those optional fields, so we disable
-        // Structured Outputs here. This falls back to legacy function-calling,
-        // which accepts optional parameters but no longer guarantees strictly
-        // valid JSON responses.
-        //
-        // See: https://github.com/vercel/ai/issues/6776  // main error thread
-        //      https://github.com/vercel/ai/issues/2792  // same root cause
-        //      https://github.com/vercel/ai/issues/2573
-        modelConfig.provider === 'openai'
-          ? {
-              openai: {
-                structuredOutputs: false,
-              },
-            }
-          : undefined,
     })
 
     return result.toUIMessageStreamResponse({

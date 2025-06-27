@@ -95,5 +95,12 @@ export default function ChatState({ id, models, initialMessages, saveMessages }:
     },
   })
 
-  return <ChatUI chatHelpers={chatHelpers} models={models} selectedModel={selectedModel?.id ?? null} onModelChange={handleModelChange} />
+  return (
+    <ChatUI
+      chatHelpers={chatHelpers}
+      models={models}
+      selectedModel={selectedModel?.id ?? null}
+      onModelChange={handleModelChange}
+    />
+  )
 }
