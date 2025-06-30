@@ -1,3 +1,4 @@
+import { getCloudUrl } from '@/lib/config'
 import type { ToolConfig } from '@/types'
 import ky from 'ky'
 import { z } from 'zod'
@@ -42,8 +43,9 @@ export type SearchLocationParams = z.infer<typeof searchLocationSchema>
  */
 export const search = async (params: SearchParams): Promise<string> => {
   try {
+    const cloudUrl = await getCloudUrl()
     const response = await ky
-      .post('http://localhost:8000/pro/search', {
+      .post(`${cloudUrl}/pro/search`, {
         json: {
           query: params.query,
           max_results: params.max_results || 10,
@@ -67,8 +69,9 @@ export const search = async (params: SearchParams): Promise<string> => {
  */
 export const fetchContent = async (params: FetchContentParams): Promise<string> => {
   try {
+    const cloudUrl = await getCloudUrl()
     const response = await ky
-      .post('http://localhost:8000/pro/fetch-content', {
+      .post(`${cloudUrl}/pro/fetch-content`, {
         json: {
           url: params.url,
         },
@@ -91,8 +94,9 @@ export const fetchContent = async (params: FetchContentParams): Promise<string> 
  */
 export const getCurrentWeather = async (params: WeatherParams): Promise<string> => {
   try {
+    const cloudUrl = await getCloudUrl()
     const response = await ky
-      .post('http://localhost:8000/pro/weather/current', {
+      .post(`${cloudUrl}/pro/weather/current`, {
         json: {
           lat: params.lat,
           lng: params.lng,
@@ -116,8 +120,9 @@ export const getCurrentWeather = async (params: WeatherParams): Promise<string> 
  */
 export const getWeatherForecast = async (params: WeatherParams): Promise<string> => {
   try {
+    const cloudUrl = await getCloudUrl()
     const response = await ky
-      .post('http://localhost:8000/pro/weather/forecast', {
+      .post(`${cloudUrl}/pro/weather/forecast`, {
         json: {
           lat: params.lat,
           lng: params.lng,
@@ -142,8 +147,9 @@ export const getWeatherForecast = async (params: WeatherParams): Promise<string>
  */
 export const searchLocations = async (params: SearchLocationParams): Promise<string> => {
   try {
+    const cloudUrl = await getCloudUrl()
     const response = await ky
-      .post('http://localhost:8000/pro/locations/search', {
+      .post(`${cloudUrl}/pro/locations/search`, {
         json: {
           query: params.query,
         },
