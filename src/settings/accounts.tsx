@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useDatabase } from '@/hooks/use-database'
 import { accountsTable } from '@/db/tables'
+import { useDatabase } from '@/hooks/use-database'
 import ImapClient from '@/imap/imap'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -17,10 +17,12 @@ import { z } from 'zod'
 
 const formSchema = z.object({
   hostname: z.string().min(1, { message: 'Hostname is required.' }),
-  port: z.coerce.number().int().min(1, { message: 'Port is required.' }),
+  port: z.number().int().min(1, { message: 'Port is required.' }),
   username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 })
+
+type FormData = z.infer<typeof formSchema>
 
 export default function AccountsSettingsPage() {
   const { db } = useDatabase()
@@ -51,7 +53,7 @@ export default function AccountsSettingsPage() {
 
   // Update account mutation
   const updateAccountMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
+    mutationFn: async (values: FormData) => {
       if (!selectedAccount) return
 
       await db
@@ -71,7 +73,7 @@ export default function AccountsSettingsPage() {
     },
   })
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       hostname: currentAccount?.imapHostname || '',
@@ -93,7 +95,7 @@ export default function AccountsSettingsPage() {
     }
   }, [currentAccount, form])
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormData) => {
     setShowSaved(false)
     await updateAccountMutation.mutateAsync(values)
 
@@ -128,7 +130,9 @@ export default function AccountsSettingsPage() {
           <Select value={selectedAccount || undefined} onValueChange={setSelectedAccount}>
             <SelectTrigger className="w-full p-6 py-8">
               <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center bg-primary text-primary-foreground size-8 rounded-md font-medium">{currentAccount?.imapUsername?.[0]?.toUpperCase() || '?'}</div>
+                <div className="flex items-center justify-center bg-primary text-primary-foreground size-8 rounded-md font-medium">
+                  {currentAccount?.imapUsername?.[0]?.toUpperCase() || '?'}
+                </div>
                 <div className="flex flex-col">
                   <SelectValue placeholder="Select an account" />
                   <div className="text-sm text-muted-foreground">{currentAccount?.imapUsername}</div>
@@ -171,7 +175,11 @@ export default function AccountsSettingsPage() {
                     <FormItem>
                       <FormLabel>Port</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 993)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

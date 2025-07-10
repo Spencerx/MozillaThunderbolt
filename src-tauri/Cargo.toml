@@ -39,21 +39,21 @@ name = "thunderbolt"
 path = "src/main.rs"
 
 [build-dependencies]
-tauri-build = { version = "2.2.0", features = [] }
+tauri-build = { version = "2.3.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.5.1", features = [ "tray-icon", "devtools"] }
-tauri-plugin-opener = "2.3.0"
-tauri-plugin-shell = "2.2.2"
-tauri-plugin-os = "2"
+tauri = { version = "2.6.2", features = [ "tray-icon", "devtools"] }
+tauri-plugin-opener = "2.4.0"
+tauri-plugin-shell = "2.3.0"
+tauri-plugin-os = "2.3.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 anyhow = "1.0.98"
-tokio = "1.45.1"
+tokio = "1.46.1"
 tauri-plugin-devtools = "2.0.0"
-tauri-plugin-http = "2.4.4"
-tauri-plugin-process = "2.2.2"
-tauri-plugin-fs = "2.3.0"
+tauri-plugin-http = "2.5.0"
+tauri-plugin-process = "2.3.0"
+tauri-plugin-fs = "2.4.0"
 thunderbolt-imap-client = { package = "thunderbolt-imap-client", path = "./thunderbolt_imap_client", optional = true }
 thunderbolt-imap-sync = { package = "thunderbolt-imap-sync", path = "./thunderbolt_imap_sync", optional = true }
 thunderbolt-embeddings = { package = "thunderbolt-embeddings", path = "./thunderbolt_embeddings", optional = true }
