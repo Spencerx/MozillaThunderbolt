@@ -63,18 +63,42 @@ interface ResponsiveModalContentProps
 const ResponsiveModalContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   ResponsiveModalContentProps
->(({ side = 'bottom', className, children, ...props }, ref) => (
-  <ResponsiveModalPortal>
-    <ResponsiveModalOverlay />
-    <DialogPrimitive.Content ref={ref} className={cn(ResponsiveModalVariants({ side }), className)} {...props}>
-      {children}
-      <ResponsiveModalClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </ResponsiveModalClose>
-    </DialogPrimitive.Content>
-  </ResponsiveModalPortal>
-))
+>(
+  // Added `style` to the destructured props so we can merge custom styles
+  ({ side = 'bottom', className, children, style, ...props }, ref) => {
+    // Compute additional inline styles when the sheet is anchored to the bottom
+    const bottomSheetStyle: React.CSSProperties | undefined =
+      side === 'bottom'
+        ? {
+            // Lift the sheet above the software keyboard.
+            bottom: 'var(--kb, 0px)',
+            // Keep the sheet inside the visible viewport when raised.
+            maxHeight: 'calc(80dvh - var(--kb, 0px))',
+            // Ensure content isn’t hidden behind the iOS home indicator notch.
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + var(--kb, 0px))',
+          }
+        : undefined
+
+    return (
+      <ResponsiveModalPortal>
+        <ResponsiveModalOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(ResponsiveModalVariants({ side }), className)}
+          // Merge caller-provided styles with our dynamic ones (caller styles win)
+          style={{ ...bottomSheetStyle, ...style }}
+          {...props}
+        >
+          {children}
+          <ResponsiveModalClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </ResponsiveModalClose>
+        </DialogPrimitive.Content>
+      </ResponsiveModalPortal>
+    )
+  },
+)
 ResponsiveModalContent.displayName = DialogPrimitive.Content.displayName
 
 const ResponsiveModalHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

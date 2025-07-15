@@ -2,17 +2,17 @@ import { AvailableTools } from '@/components/available-tools'
 import { StatusIndicator } from '@/components/status-indicator'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from '@/components/ui/responsive-modal'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { mcpServersTable } from '@/db/tables'
@@ -322,17 +322,19 @@ export default function McpServersPage() {
     <div className="flex flex-col gap-4 p-4 w-full max-w-[760px] mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="mt-8 text-4xl font-bold tracking-tight mb-2 text-primary">MCP Servers</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
+        <ResponsiveModal open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <ResponsiveModalTrigger asChild>
             <Button variant="outline" size="icon">
               <Plus />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add MCP Server</DialogTitle>
-              <DialogDescription>Enter the URL of the MCP server you want to connect to.</DialogDescription>
-            </DialogHeader>
+          </ResponsiveModalTrigger>
+          <ResponsiveModalContent className="sm:max-w-[500px]">
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Add MCP Server</ResponsiveModalTitle>
+              <ResponsiveModalDescription>
+                Enter the URL of the MCP server you want to connect to.
+              </ResponsiveModalDescription>
+            </ResponsiveModalHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="url">Server URL</Label>
@@ -393,8 +395,8 @@ export default function McpServersPage() {
                 Add Server
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       </div>
 
       <div className="grid gap-4">

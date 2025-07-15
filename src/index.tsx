@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import { App } from './app'
+import './polyfills'
 
 import './index.css'
 import { initializeLinkInterception } from './lib/intercept-links'

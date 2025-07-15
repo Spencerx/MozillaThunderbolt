@@ -2,17 +2,17 @@ import { createModel } from '@/ai/fetch'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from '@/components/ui/responsive-modal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StatusCard } from '@/components/ui/status-card'
 import { Switch } from '@/components/ui/switch'
@@ -695,17 +695,17 @@ export default function ModelsPage() {
     <div className="flex flex-col gap-4 p-4 w-full max-w-[760px] mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="mt-8 text-4xl font-bold tracking-tight mb-2 text-primary">Models</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger asChild>
+        <ResponsiveModal open={isAddDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <ResponsiveModalTrigger asChild>
             <Button variant="outline" size="icon">
               <Plus />
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add Model</DialogTitle>
-              <DialogDescription>Configure a new AI model for your assistant.</DialogDescription>
-            </DialogHeader>
+          </ResponsiveModalTrigger>
+          <ResponsiveModalContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Add Model</ResponsiveModalTitle>
+              <ResponsiveModalDescription>Configure a new AI model for your assistant.</ResponsiveModalDescription>
+            </ResponsiveModalHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={handleKeyDown} className="grid gap-4 py-4">
                 <FormField
@@ -1015,8 +1015,8 @@ export default function ModelsPage() {
                 </div>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       </div>
 
       <div className="grid gap-4">

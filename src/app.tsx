@@ -16,6 +16,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import ChatDetailPage from '@/chats/detail'
 import OAuthCallback from '@/components/oauth-callback'
 import { SidebarProvider } from '@/components/ui/sidebar'
+import { useKeyboardInset } from '@/hooks/use-keyboard-inset'
 import { useMcpSync } from '@/hooks/use-mcp-sync'
 import ChatLayout from '@/layout/main-layout'
 import { getOrCreateChatThread } from '@/lib/dal'
@@ -56,6 +57,7 @@ const queryClient = new QueryClient()
 function AppContent({ initData }: { initData: InitData }) {
   useMcpSync()
   useTriggerScheduler()
+  useKeyboardInset()
 
   return (
     <BrowserRouter>

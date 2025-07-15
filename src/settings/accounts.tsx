@@ -1,8 +1,13 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalTitle,
+} from '@/components/ui/responsive-modal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { accountsTable } from '@/db/tables'
 import { useDatabase } from '@/hooks/use-database'
@@ -119,12 +124,12 @@ export default function AccountsSettingsPage() {
           </Button>
         </div>
 
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent>
-            <DialogTitle>Multiple Accounts</DialogTitle>
-            <DialogDescription>Support for multiple accounts is coming soon!</DialogDescription>
-          </DialogContent>
-        </Dialog>
+        <ResponsiveModal open={showDialog} onOpenChange={setShowDialog}>
+          <ResponsiveModalContent>
+            <ResponsiveModalTitle>Multiple Accounts</ResponsiveModalTitle>
+            <ResponsiveModalDescription>Support for multiple accounts is coming soon!</ResponsiveModalDescription>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
 
         {accounts.length > 0 && (
           <Select value={selectedAccount || undefined} onValueChange={setSelectedAccount}>
