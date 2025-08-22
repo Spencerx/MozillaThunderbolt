@@ -35,3 +35,7 @@ tauri.key
 .tauri/
 *storybook.log
 storybook-static
+
+# Dev Ex custom things
+mise*.toml
+mise.toml
