@@ -156,7 +156,7 @@ class TestExaSDKContentFetching:
         mock_content.text = "This is the fetched content"
 
         mock_response = Mock()
-        mock_response.contents = [mock_content]
+        mock_response.results = [mock_content]
 
         with patch("pro.exa.create_exa_client") as mock_create:
             mock_client = Mock()
@@ -177,7 +177,7 @@ class TestExaSDKContentFetching:
         from pro.exa import fetch_content_exa
 
         mock_response = Mock()
-        mock_response.contents = []
+        mock_response.results = []
 
         with patch("pro.exa.create_exa_client") as mock_create:
             mock_client = Mock()
@@ -213,7 +213,7 @@ class TestExaSDKContentFetching:
         mock_content.extract = ""
 
         mock_response = Mock()
-        mock_response.contents = [mock_content]
+        mock_response.results = [mock_content]
 
         with patch("pro.exa.create_exa_client") as mock_create:
             mock_client = Mock()
@@ -242,7 +242,7 @@ class TestExaSDKPrivacy:
         with patch("pro.exa.create_exa_client") as mock_create:
             mock_client = Mock()
             mock_response = Mock()
-            mock_response.contents = []
+            mock_response.results = []
             mock_client.get_contents.return_value = mock_response
             mock_create.return_value = mock_client
 
@@ -283,7 +283,7 @@ class TestExaSDKPrivacy:
         with patch("pro.exa.create_exa_client") as mock_create:
             mock_client = Mock()
             mock_response = Mock()
-            mock_response.contents = []
+            mock_response.results = []
             mock_client.get_contents.return_value = mock_response
             mock_create.return_value = mock_client
 
@@ -303,7 +303,7 @@ class TestExaSDKPrivacy:
             mock_response = Mock()
             mock_content = Mock()
             mock_content.text = "Content"
-            mock_response.contents = [mock_content]
+            mock_response.results = [mock_content]
             mock_client.get_contents.return_value = mock_response
             mock_create.return_value = mock_client
 

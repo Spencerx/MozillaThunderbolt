@@ -105,8 +105,8 @@ async def fetch_content_exa(url: str, ctx: SimpleContext) -> str:
             },
         )
 
-        if response.contents and len(response.contents) > 0:
-            content = response.contents[0]
+        if response.results and len(response.results) > 0:
+            content = response.results[0]
             # Return the text content
             return getattr(content, "text", "") or getattr(content, "extract", "")
         else:
