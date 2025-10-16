@@ -1,4 +1,5 @@
 import { createModel } from '@/ai/fetch'
+import { ModificationIndicator } from '@/components/modification-indicator'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -18,9 +19,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { StatusCard } from '@/components/ui/status-card'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { getAllModels, resetModelToDefault } from '@/dal'
 import { DatabaseSingleton } from '@/db/singleton'
 import { modelsTable } from '@/db/tables'
-import { getAllModels } from '@/dal'
+import { defaultModels } from '@/defaults/models'
+import { isModelModified } from '@/defaults/utils'
 import { fetch } from '@/lib/fetch'
 import { cn } from '@/lib/utils'
 import type { Model } from '@/types'
@@ -168,7 +171,7 @@ function modelReducer(state: ModelState, action: ModelAction): ModelState {
 
 const formSchema = z
   .object({
-    provider: z.enum(['thunderbolt', 'anthropic', 'openai', 'custom', 'openrouter', 'flower']),
+    provider: z.enum(['thunderbolt', 'anthropic', 'openai', 'custom', 'openrouter']),
     name: z.string().min(1, { message: 'Name is required.' }),
     model: z.string().min(1, { message: 'Model name is required.' }),
     customModel: z.string().optional(),
@@ -190,8 +193,8 @@ const formSchema = z
   )
   .refine(
     (data) => {
-      if (data.provider === 'thunderbolt' || data.provider === 'flower') {
-        return true // API key not required for thunderbolt or flower
+      if (data.provider === 'thunderbolt') {
+        return true // API key not required for thunderbolt
       }
       if (data.provider === 'custom') {
         return true // API key is optional for custom (OpenAI compatible)
@@ -287,6 +290,23 @@ export default function ModelsPage() {
       dispatch({ type: 'CLOSE_DELETE_CONFIRM' })
     },
   })
+
+  const resetModelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const defaultModel = defaultModels.find((m) => m.id === id)
+      if (!defaultModel) {
+        throw new Error('Model is not a default model')
+      }
+      await resetModelToDefault(id, defaultModel)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['models'] })
+    },
+  })
+
+  const handleResetModel = (id: string) => {
+    resetModelMutation.mutate(id)
+  }
 
   type FormData = z.infer<typeof formSchema>
 
@@ -703,7 +723,6 @@ export default function ModelsPage() {
   const getProviderDisplay = (provider: string) => {
     switch (provider) {
       case 'thunderbolt':
-      case 'flower':
         return 'Thunderbolt'
       case 'anthropic':
         return 'Anthropic'
@@ -1133,7 +1152,15 @@ export default function ModelsPage() {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        {model.name}
+                        <ModificationIndicator
+                          hasModifications={isModelModified(model)}
+                          onReset={() => handleResetModel(model.id)}
+                          customMessage="You've customized this model."
+                          ariaLabel="Modified model"
+                          requireConfirmation={false}
+                        >
+                          {model.name}
+                        </ModificationIndicator>
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
                         {getProviderDisplay(model.provider)} - {model.model}
@@ -1230,7 +1257,7 @@ export default function ModelsPage() {
                         <span className="text-sm font-mono truncate max-w-[300px]">{model.url}</span>
                       </div>
                     )}
-                    {['thunderbolt', 'flower'].includes(model.provider) && (
+                    {model.provider === 'thunderbolt' && (
                       <div className="text-sm text-muted-foreground">Uses Thunderbolt cloud service</div>
                     )}
                   </div>
