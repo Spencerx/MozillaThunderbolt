@@ -3,7 +3,7 @@ import {
   extractTextFromMessages,
   hasToolCalls,
   isFinalStep,
-  NUDGE_MESSAGES,
+  nudgeMessages,
   shouldRetry,
   shouldShowPreventiveNudge,
 } from '@/ai/step-logic'
@@ -28,6 +28,8 @@ import { v7 as uuidv7 } from 'uuid'
 import {
   convertToModelMessages,
   createUIMessageStream,
+  InvalidToolInputError,
+  NoSuchToolError,
   createUIMessageStreamResponse,
   extractReasoningMiddleware,
   stepCountIs,
@@ -198,6 +200,14 @@ export const aiFetchStreamingResponse = async ({
     const maxSteps = 20
     const maxAttempts = 2
 
+    // Some models have issues with parallel tool calls - disable based on model configuration
+    // Uses vendor (actual model maker like 'mistral') for provider options key since the
+    // backend recognizes vendor-specific options. Falls back to provider for user-created models.
+    // See: https://github.com/vllm-project/vllm/issues/9019
+    const providerOptionsKey = model.vendor ?? model.provider
+    const providerOptions =
+      model.supportsParallelToolCalls === 0 ? { [providerOptionsKey]: { parallelToolCalls: false } } : undefined
+
     /**
      * Run a single streamText attempt and return the result along with metadata
      */
@@ -209,6 +219,7 @@ export const aiFetchStreamingResponse = async ({
         messages: inputMessages,
         tools: supportsTools ? toolset : undefined,
         stopWhen: stepCountIs(maxSteps),
+        providerOptions,
 
         prepareStep: ({ steps, stepNumber, messages: stepMessages }) => {
           // Final step: disable tools to force a response
@@ -216,14 +227,14 @@ export const aiFetchStreamingResponse = async ({
             console.info(`Final step ${stepNumber} - telling model to wrap it up...`)
             return {
               activeTools: [],
-              messages: [...stepMessages, { role: 'user' as const, content: NUDGE_MESSAGES.finalStep }],
+              messages: [...stepMessages, { role: 'user' as const, content: nudgeMessages.finalStep }],
             }
           }
 
           // Nudge after many tool calls (but not on final step)
           if (shouldShowPreventiveNudge(steps)) {
             return {
-              messages: [...stepMessages, { role: 'user' as const, content: NUDGE_MESSAGES.preventive }],
+              messages: [...stepMessages, { role: 'user' as const, content: nudgeMessages.preventive }],
             }
           }
         },
@@ -253,6 +264,25 @@ export const aiFetchStreamingResponse = async ({
         },
         onError: (error) => {
           console.error('streamText error', error)
+        },
+
+        // Handle malformed tool calls from models with weaker tool-calling capabilities
+        experimental_repairToolCall: async ({ toolCall, error }) => {
+          // Don't attempt to repair calls to non-existent tools
+          if (NoSuchToolError.isInstance(error)) {
+            console.warn(`Tool "${toolCall.toolName}" does not exist, skipping`)
+            return null
+          }
+
+          // Log invalid tool arguments and skip the call
+          if (InvalidToolInputError.isInstance(error)) {
+            console.warn(`Invalid arguments for tool "${toolCall.toolName}": ${error.message}`)
+            return null
+          }
+
+          // For other errors, skip the tool call
+          console.warn(`Tool call error for "${toolCall.toolName}":`, error)
+          return null
         },
       })
     }
@@ -300,7 +330,7 @@ export const aiFetchStreamingResponse = async ({
               currentMessages = [
                 ...currentMessages,
                 ...response.messages,
-                { role: 'user' as const, content: NUDGE_MESSAGES.retry },
+                { role: 'user' as const, content: nudgeMessages.retry },
               ]
 
               isRetry = true

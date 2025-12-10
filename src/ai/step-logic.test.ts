@@ -3,7 +3,7 @@ import {
   extractTextFromMessages,
   hasToolCalls,
   isFinalStep,
-  NUDGE_MESSAGES,
+  nudgeMessages,
   shouldRetry,
   shouldShowPreventiveNudge,
 } from './step-logic'
@@ -209,19 +209,19 @@ describe('shouldRetry', () => {
   })
 })
 
-describe('NUDGE_MESSAGES', () => {
+describe('nudgeMessages', () => {
   test('finalStep message is defined and non-empty', () => {
-    expect(NUDGE_MESSAGES.finalStep).toBeTruthy()
-    expect(NUDGE_MESSAGES.finalStep.length).toBeGreaterThan(0)
+    expect(nudgeMessages.finalStep).toBeTruthy()
+    expect(nudgeMessages.finalStep.length).toBeGreaterThan(0)
   })
 
   test('preventive message is defined and non-empty', () => {
-    expect(NUDGE_MESSAGES.preventive).toBeTruthy()
-    expect(NUDGE_MESSAGES.preventive.length).toBeGreaterThan(0)
+    expect(nudgeMessages.preventive).toBeTruthy()
+    expect(nudgeMessages.preventive.length).toBeGreaterThan(0)
   })
 
   test('retry message is defined and non-empty', () => {
-    expect(NUDGE_MESSAGES.retry).toBeTruthy()
-    expect(NUDGE_MESSAGES.retry.length).toBeGreaterThan(0)
+    expect(nudgeMessages.retry).toBeTruthy()
+    expect(nudgeMessages.retry.length).toBeGreaterThan(0)
   })
 })

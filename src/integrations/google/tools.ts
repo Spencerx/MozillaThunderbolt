@@ -216,12 +216,31 @@ export type DriveFile = {
   description?: string
 }
 
+/**
+ * Result of attempting to extract text content from a Google Drive file.
+ * Uses structured metadata to let the LLM craft appropriate responses.
+ */
 export type DriveFileContent = {
   file_id: string
   file_name: string
-  content: string
-  truncated: boolean
-  error?: string
+  mime_type: string
+  content: string | null
+  /** When true, text extraction was not possible */
+  extraction_failed?: boolean
+  /** Category of failure: 'unsupported_type' | 'access_denied' | 'not_found' */
+  failure_reason?: 'unsupported_type' | 'access_denied' | 'not_found'
+  /** Hint about the file type category for LLM context */
+  file_category?: 'pdf' | 'image' | 'video' | 'audio' | 'binary' | 'unknown'
+}
+
+/** Categorize MIME type for LLM context when file type is unsupported */
+const getDriveFileCategory = (mime: string): DriveFileContent['file_category'] => {
+  if (mime === 'application/pdf') return 'pdf'
+  if (mime.startsWith('image/')) return 'image'
+  if (mime.startsWith('video/')) return 'video'
+  if (mime.startsWith('audio/')) return 'audio'
+  if (mime.includes('octet-stream') || mime.includes('binary')) return 'binary'
+  return 'unknown'
 }
 
 // =============================================================================
@@ -577,6 +596,9 @@ export const searchDrive = async (params: SearchDriveParams, httpClient: KyInsta
     'fields',
     'files(id,name,mimeType,size,createdTime,modifiedTime,webViewLink,webContentLink,parents,description,shared,ownedByMe),nextPageToken',
   )
+  // Enable access to files in Shared Drives (Team Drives)
+  searchParams.set('supportsAllDrives', 'true')
+  searchParams.set('includeItemsFromAllDrives', 'true')
 
   // Build the search query
   let searchQuery = transformDriveQuery(params.query)
@@ -632,6 +654,24 @@ export const searchDrive = async (params: SearchDriveParams, httpClient: KyInsta
 }
 
 /**
+ * Extract file ID from a Google Drive/Docs/Sheets/Slides URL.
+ * If the input is already a file ID (no URL pattern match), returns it as-is.
+ */
+export const extractDriveFileId = (input: string): string => {
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /docs\.google\.com\/document\/d\/([a-zA-Z0-9_-]+)/,
+    /docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/,
+    /docs\.google\.com\/presentation\/d\/([a-zA-Z0-9_-]+)/,
+  ]
+  for (const pattern of patterns) {
+    const match = input.match(pattern)
+    if (match) return match[1]
+  }
+  return input
+}
+
+/**
  * Get text content from a Google Drive file
  * Works with Google Docs, Sheets, Slides, and text files
  */
@@ -642,11 +682,14 @@ export const getDriveFileContent = async (
   const credentials = await getGoogleCredentials()
   const accessToken = await ensureValidGoogleToken(credentials)
 
+  // Extract file ID from URL if a full URL was provided
+  const fileId = extractDriveFileId(params.file_id)
+
   try {
-    // Get file metadata to determine type
+    // Get file metadata to determine type (supportsAllDrives enables Shared Drive access)
     const fileResponse = await httpClient
-      .get(`https://www.googleapis.com/drive/v3/files/${params.file_id}`, {
-        searchParams: { fields: 'id,name,mimeType' },
+      .get(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        searchParams: { fields: 'id,name,mimeType', supportsAllDrives: 'true' },
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .json<any>()
@@ -659,60 +702,72 @@ export const getDriveFileContent = async (
     // Extract content based on file type
     if (mimeType === 'application/vnd.google-apps.document') {
       // Google Docs - export as plain text
-      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${params.file_id}/export`, {
-        searchParams: { mimeType: 'text/plain' },
+      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${fileId}/export`, {
+        searchParams: { mimeType: 'text/plain', supportsAllDrives: 'true' },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      content = await response.text()
+    } else if (mimeType === 'application/vnd.google-apps.spreadsheet') {
+      // Google Sheets - export as CSV
+      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${fileId}/export`, {
+        searchParams: { mimeType: 'text/csv', supportsAllDrives: 'true' },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      content = await response.text()
+    } else if (mimeType === 'application/vnd.google-apps.presentation') {
+      // Google Slides - export as plain text
+      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${fileId}/export`, {
+        searchParams: { mimeType: 'text/plain', supportsAllDrives: 'true' },
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       content = await response.text()
     } else if (mimeType.startsWith('text/')) {
       // Text files - get raw content
-      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${params.file_id}`, {
-        searchParams: { alt: 'media' },
+      const response = await httpClient.get(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        searchParams: { alt: 'media', supportsAllDrives: 'true' },
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       content = await response.text()
     } else {
-      // Unsupported file type
+      // Unsupported file type - return structured metadata for LLM to craft response
       return {
-        file_id: params.file_id,
+        file_id: fileId,
         file_name: fileName,
-        content: '',
-        truncated: false,
-        error: `Cannot extract text from ${mimeType}. Only Google Docs and text files are supported.`,
+        mime_type: mimeType,
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'unsupported_type',
+        file_category: getDriveFileCategory(mimeType),
       }
-    }
-
-    // Truncate if too long for LLM context
-    const maxLength = 50000
-    const truncated = content.length > maxLength
-    if (truncated) {
-      content = truncateText(content, maxLength)
     }
 
     return {
-      file_id: params.file_id,
+      file_id: fileId,
       file_name: fileName,
+      mime_type: mimeType,
       content,
-      truncated,
     }
-  } catch (error: any) {
-    if (error.response?.status === 403) {
+  } catch (error: unknown) {
+    const httpError = error as { response?: { status: number } }
+    if (httpError.response?.status === 403) {
       return {
-        file_id: params.file_id,
+        file_id: fileId,
         file_name: 'Unknown',
-        content: '',
-        truncated: false,
-        error: 'Access denied. Make sure you have permission to read this file.',
+        mime_type: 'unknown',
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'access_denied',
       }
     }
 
-    if (error.response?.status === 404) {
+    if (httpError.response?.status === 404) {
       return {
-        file_id: params.file_id,
+        file_id: fileId,
         file_name: 'Unknown',
-        content: '',
-        truncated: false,
-        error: 'File not found.',
+        mime_type: 'unknown',
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'not_found',
       }
     }
 
@@ -793,7 +848,8 @@ export const createConfigs = (httpClient: KyInstance): ToolConfig[] => [
   },
   {
     name: 'google_get_drive_file_content',
-    description: 'Get the text content from a Google Drive file (Google Docs and text files)',
+    description:
+      'Get text content from a Google Drive file. Accepts file IDs or full Google URLs (drive.google.com, docs.google.com/document, docs.google.com/spreadsheets, docs.google.com/presentation). Supports Google Docs, Sheets (as CSV), Slides, and text files. For unsupported types (PDFs, images, etc.), returns file metadata with extraction_failed=true.',
     verb: 'Getting Drive file content',
     parameters: getDriveFileContentSchema,
     execute: (params: GetDriveFileContentParams) => getDriveFileContent(params, httpClient),

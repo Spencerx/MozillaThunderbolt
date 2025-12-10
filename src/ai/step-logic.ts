@@ -65,7 +65,7 @@ export const shouldRetry = (
 ): boolean => totalText.trim().length === 0 && hadToolCalls && attemptNumber < maxAttempts
 
 /** Nudge messages used during the agentic loop */
-export const NUDGE_MESSAGES = {
+export const nudgeMessages = {
   finalStep:
     'RESPOND NOW. Provide your answer using the information you have gathered. Do not ask questions—give your best response immediately.',
   preventive:

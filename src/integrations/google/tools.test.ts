@@ -13,6 +13,7 @@ import {
   checkCalendar,
   checkInbox,
   draftEmail,
+  extractDriveFileId,
   getDriveFileContent,
   getEmail,
   searchDrive,
@@ -883,6 +884,44 @@ describe('Google Tools', () => {
     })
   })
 
+  describe('extractDriveFileId', () => {
+    it('should extract file ID from Google Drive file URL', () => {
+      const url = 'https://drive.google.com/file/d/1abc123XYZ_-def456/view?usp=sharing'
+      expect(extractDriveFileId(url)).toBe('1abc123XYZ_-def456')
+    })
+
+    it('should extract file ID from Google Docs URL', () => {
+      const url = 'https://docs.google.com/document/d/1abc123XYZ_-def456/edit?tab=t.0'
+      expect(extractDriveFileId(url)).toBe('1abc123XYZ_-def456')
+    })
+
+    it('should extract file ID from Google Sheets URL', () => {
+      const url =
+        'https://docs.google.com/spreadsheets/d/1u45_haUZDqq9C0Yum7ZNpx-KPNW_RMLvulcmBpvGcf0/edit?gid=1351715876#gid=1351715876'
+      expect(extractDriveFileId(url)).toBe('1u45_haUZDqq9C0Yum7ZNpx-KPNW_RMLvulcmBpvGcf0')
+    })
+
+    it('should extract file ID from Google Slides URL', () => {
+      const url = 'https://docs.google.com/presentation/d/1abc123XYZ_-def456/edit#slide=id.p'
+      expect(extractDriveFileId(url)).toBe('1abc123XYZ_-def456')
+    })
+
+    it('should return input as-is if already a file ID', () => {
+      const fileId = '1abc123XYZ_-def456'
+      expect(extractDriveFileId(fileId)).toBe('1abc123XYZ_-def456')
+    })
+
+    it('should return input as-is for unrecognized URL patterns', () => {
+      const unknownUrl = 'https://example.com/some/path'
+      expect(extractDriveFileId(unknownUrl)).toBe(unknownUrl)
+    })
+
+    it('should handle URL with trailing slash', () => {
+      const url = 'https://docs.google.com/document/d/1abc123XYZ_-def456/'
+      expect(extractDriveFileId(url)).toBe('1abc123XYZ_-def456')
+    })
+  })
+
   describe('getDriveFileContent', () => {
     it('should get content from a Google Doc', async () => {
       const params: GetDriveFileContentParams = {
@@ -904,7 +943,6 @@ describe('Google Tools', () => {
         file_id: 'doc123',
         file_name: 'My Document.docx',
         content: mockContent,
-        truncated: false,
       })
     })
 
@@ -928,7 +966,6 @@ describe('Google Tools', () => {
         file_id: 'txt123',
         file_name: 'notes.txt',
         content: mockContent,
-        truncated: false,
       })
     })
 
@@ -949,9 +986,11 @@ describe('Google Tools', () => {
       expect(result).toMatchObject({
         file_id: 'img123',
         file_name: 'photo.jpg',
-        content: '',
-        truncated: false,
-        error: 'Cannot extract text from image/jpeg. Only Google Docs and text files are supported.',
+        mime_type: 'image/jpeg',
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'unsupported_type',
+        file_category: 'image',
       })
     })
 
@@ -968,9 +1007,10 @@ describe('Google Tools', () => {
       expect(result).toMatchObject({
         file_id: 'private123',
         file_name: 'Unknown',
-        content: '',
-        truncated: false,
-        error: 'Access denied. Make sure you have permission to read this file.',
+        mime_type: 'unknown',
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'access_denied',
       })
     })
 
@@ -987,32 +1027,11 @@ describe('Google Tools', () => {
       expect(result).toMatchObject({
         file_id: 'missing123',
         file_name: 'Unknown',
-        content: '',
-        truncated: false,
-        error: 'File not found.',
+        mime_type: 'unknown',
+        content: null,
+        extraction_failed: true,
+        failure_reason: 'not_found',
       })
-    })
-
-    it('should truncate long content', async () => {
-      const params: GetDriveFileContentParams = {
-        file_id: 'long123',
-      }
-
-      const mockFileResponse = {
-        id: 'long123',
-        name: 'long-document.docx',
-        mimeType: 'application/vnd.google-apps.document',
-      }
-
-      // Create a string longer than the 50000 character limit
-      const longContent = 'A'.repeat(60000)
-      mockTruncateText.mockReturnValue('A'.repeat(50000) + '...[truncated]')
-
-      const mockHttpClient = createMockHttpClient([mockFileResponse, longContent])
-      const result = await getDriveFileContent(params, mockHttpClient)
-
-      expect(result.truncated).toBe(true)
-      expect(mockTruncateText).toHaveBeenCalledWith(longContent, 50000)
     })
   })
 })
