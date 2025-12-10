@@ -197,6 +197,19 @@ const updateCargoToml = (version: string) => {
 }
 
 /**
+ * Update Cargo.lock to reflect Cargo.toml changes
+ */
+const updateCargoLock = () => {
+  console.log('  ⟳ Updating Cargo.lock...')
+  try {
+    exec('cd src-tauri && cargo update --workspace', true)
+    console.log(`  ✓ src-tauri/Cargo.lock: updated`)
+  } catch (error) {
+    console.log(`  ⚠ src-tauri/Cargo.lock: could not update (cargo might not be installed)`)
+  }
+}
+
+/**
  * Update tauri.conf.json version
  */
 const updateTauriConf = (version: string) => {
@@ -239,6 +252,7 @@ const updateVersionFiles = (version: string, platform: string) => {
   console.log('\n📝 Updating version files to', version)
   updatePackageJson(version)
   updateCargoToml(version)
+  updateCargoLock()
   updateTauriConf(version)
   updateProjectYml(version, platform)
 
@@ -296,7 +310,7 @@ const commitAndTag = (version: string, platform: string, shouldPush: boolean) =>
 
   console.log('\n📦 Committing changes...')
 
-  exec('git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json')
+  exec('git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json')
 
   exec(
     `git commit -m "chore: bump version to ${version}${platform === 'all' ? ' for release' : ` for ${platform} release`}"`,
