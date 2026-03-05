@@ -10,6 +10,21 @@ curl -fsSL https://raw.githubusercontent.com/thunderbird/thunderbot/main/setup.s
 
 Run this from your project root. It adds thunderbot as a git subtree, creates symlinks into `.claude/commands/`, and commits the result.
 
+## Tools
+
+thunderbot skills are built on top of these CLIs:
+
+| Tool | What it's used for |
+|------|-------------------|
+| [git](https://git-scm.com/) | Version control, subtrees, worktrees |
+| [gh](https://cli.github.com/) | GitHub PRs, issues, CI checks |
+| [linear](https://github.com/linear/linear-cli) | Linear issue tracking |
+| [make](https://www.gnu.org/software/make/) | Build automation (`doctor`, `setup`, `check`, etc.) |
+| [docker](https://docs.docker.com/get-docker/) | Containerized dev environments |
+| [bun](https://bun.sh/) | JavaScript runtime and package manager |
+| [jq](https://jqlang.github.io/jq/) | JSON processing |
+| [curl](https://curl.se/) | HTTP requests (setup script) |
+
 ## Skills
 
 | Skill | Description |
