@@ -6,7 +6,7 @@ import { createProxyRoutes } from './proxy'
 import * as settingsModule from '@/config/settings'
 
 describe('Proxy Routes', () => {
-  let app: Elysia
+  let app: { handle: Elysia['handle'] }
   let getSettingsSpy: ReturnType<typeof spyOn>
   let consoleSpies: ConsoleSpies
   let mockFetch: ReturnType<typeof mock>
@@ -47,7 +47,7 @@ describe('Proxy Routes', () => {
       posthogHost: 'https://us.i.posthog.com',
       posthogApiKey: '',
       corsOrigins: 'http://localhost:1420',
-      corsOriginRegex: '',
+      corsOriginRegex: null,
       corsAllowCredentials: true,
       corsAllowMethods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
       corsAllowHeaders: 'Content-Type,Authorization',
