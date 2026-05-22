@@ -18,6 +18,7 @@ import { getLocalSetting } from '@/stores/local-settings-store'
 import { isSsoMode } from '@/lib/auth-mode'
 import { getAuthToken } from '@/lib/auth-token'
 import { fetch as baseFetch } from '@/lib/fetch'
+import type { FetchFn } from '@/lib/proxy-fetch'
 import { createToolset, getAvailableTools } from '@/lib/tools'
 import type { Model, SaveMessagesFunction, ThunderboltUIMessage } from '@/types'
 import type { SourceMetadata } from '@/types/source'
@@ -68,9 +69,17 @@ type AiFetchStreamingResponseOptions = {
   modeName?: string
   mcpClients?: MCPClient[]
   httpClient: HttpClient
+  /** Returns the current proxy fetch. Production callers pass the getter from
+   *  `ProxyFetchProvider` (`useProxyFetchGetter()`); non-React callers (eval
+   *  scripts) build a `proxyFetch` directly and wrap it in `() => fn`. */
+  getProxyFetch: () => FetchFn
 }
 
-export const createModel = async (modelConfig: Model) => {
+export const createModel = async (modelConfig: Model, getProxyFetch: () => FetchFn) => {
+  // The thunderbolt provider goes through its own SSO-aware fetch below; all
+  // other providers route through the universal proxy. We resolve the proxy
+  // fetch lazily so a settings change between chat creation and this call
+  // (e.g. cloudUrl, proxy_enabled toggle) is picked up.
   switch (modelConfig.provider) {
     case 'thunderbolt': {
       const cloudUrl = getLocalSetting('cloudUrl')
@@ -110,16 +119,14 @@ export const createModel = async (modelConfig: Model) => {
       return provider(modelConfig.model)
     }
     case 'anthropic': {
+      // Route Anthropic through the universal proxy. Hosted mode (web) sends
+      // the request to /v1/proxy with Authorization rewritten to
+      // X-Proxy-Passthrough-Authorization; Standalone mode (Tauri) hits
+      // Anthropic directly via the Rust HTTP plugin. Either way, the user's
+      // Anthropic key never goes through Thunderbolt's session auth path.
       const anthropic = createAnthropic({
         apiKey: modelConfig.apiKey || '',
-        fetch,
-        headers: {
-          // When a user adds their own Anthropic API key, calls go directly from the
-          // browser to Anthropic's API (not through our backend). Anthropic blocks
-          // browser-origin requests by default to prevent accidental key exposure.
-          // This header opts in, acknowledging the risk.
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        fetch: getProxyFetch(),
       })
       return anthropic(modelConfig.model)
     }
@@ -129,7 +136,7 @@ export const createModel = async (modelConfig: Model) => {
       }
       const openai = createOpenAI({
         apiKey: modelConfig.apiKey,
-        fetch,
+        fetch: getProxyFetch(),
       })
       return openai(modelConfig.model)
     }
@@ -141,7 +148,7 @@ export const createModel = async (modelConfig: Model) => {
         name: 'custom',
         baseURL: modelConfig.url,
         apiKey: modelConfig.apiKey || undefined,
-        fetch,
+        fetch: getProxyFetch(),
       })
       return openaiCompatible(modelConfig.model)
     }
@@ -155,7 +162,7 @@ export const createModel = async (modelConfig: Model) => {
         name: 'openrouter',
         baseURL: 'https://openrouter.ai/api/v1',
         apiKey: modelConfig.apiKey,
-        fetch,
+        fetch: getProxyFetch(),
       })
       return openrouter(modelConfig.model)
     }
@@ -172,6 +179,7 @@ export const aiFetchStreamingResponse = async ({
   modeName,
   mcpClients,
   httpClient,
+  getProxyFetch,
 }: AiFetchStreamingResponseOptions) => {
   const options = init as RequestInit & { body: string }
   const body = JSON.parse(options.body)
@@ -270,7 +278,7 @@ export const aiFetchStreamingResponse = async ({
   const activeNudges = getNudgeMessagesFromProfile(profile, modeName)
 
   try {
-    const baseModel = await createModel(model)
+    const baseModel = await createModel(model, getProxyFetch)
 
     const wrappedModel = wrapLanguageModel({
       providerId: model.provider,
